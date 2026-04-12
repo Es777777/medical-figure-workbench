@@ -16,6 +16,7 @@ import { UI_COPY, type Language } from "./copy";
 import { getElementLibrary, getLibraryCategories, getRecommendedLibraryItems, searchLibraryItems, type LibraryCategoryId } from "./element-library";
 import { EditorCanvas } from "./EditorCanvas";
 import { ExportCenter } from "./features/export/ExportCenter";
+import { ImageRefinementPanel } from "./features/editor/ImageRefinementPanel";
 import { ImportWorkbench } from "./features/import-session/ImportWorkbench";
 import { createImportSession, getKeptPanelIds, setImportMode as applyImportMode, setPanelDecision as applyPanelDecision } from "./features/import-session/state";
 import type { ImportMode, ImportSession } from "./features/import-session/types";
@@ -2084,89 +2085,36 @@ export function App() {
               ) : null}
 
               {isImageNode(selectedNode) ? (
-                <div className="property-block">
-                  <p className="section-label current-asset-label">{copy.labels.currentAsset}</p>
-                  <div className="variant-card current-asset-card">
-                    <img alt={copy.labels.currentAsset} className="variant-preview" src={renderCurrentImagePreview()} />
-                    <div className="variant-meta">
-                      <strong>{describeNode(selectedNode)}</strong>
-                      <span>{selectedNode.asset.uri}</span>
-                    </div>
-                  </div>
-
-                  <label>
-                    <span>{copy.labels.assetUri}</span>
-                    <input readOnly type="text" value={selectedNode.asset.uri} />
-                  </label>
-                  <label>
-                    <span>{copy.labels.prompt}</span>
-                    <textarea
-                      onChange={(event) => {
-                        setRegenerateState((currentState) => ({
-                          ...currentState,
-                          prompt: event.target.value,
-                        }));
-                      }}
-                      rows={4}
-                      value={regenerateState.prompt}
-                    />
-                  </label>
-                  <label>
-                    <span>{copy.labels.feedback}</span>
-                    <textarea
-                      onChange={(event) => {
-                        setRegenerateState((currentState) => ({
-                          ...currentState,
-                          feedback: event.target.value,
-                        }));
-                      }}
-                      rows={3}
-                      value={regenerateState.feedback}
-                    />
-                  </label>
-                  <button className="primary-button" disabled={regenerateState.status === "loading"} onClick={handleRegenerate} type="button">
-                    {regenerateState.status === "loading" ? copy.actions.regenerating : copy.actions.regenerate}
-                  </button>
-
-                  <div className="response-panel">
-                    <div className="response-header">
-                      <strong>{copy.labels.regenerateStatus}</strong>
-                      {regenerateState.mode ? <span className={`mode-badge mode-${regenerateState.mode}`}>{regenerateState.mode}</span> : null}
-                    </div>
-                    <p>{getRegenerateSummary(language, regenerateState)}</p>
-                    {regenerateState.message ? (
-                      <p className="technical-note">
-                        <strong>{copy.labels.fallbackDetail}:</strong> {regenerateState.message}
-                      </p>
-                    ) : null}
-
-                    <div className="variants-header-row">
-                      <strong>{copy.sections.generatedVariants}</strong>
-                    </div>
-
-                    {regenerateState.response ? (
-                      <div className="variant-grid">
-                        {regenerateState.response.variants.map((variant) => {
-                          const isApplied = regenerateState.appliedVariantId === variant.id;
-                          return (
-                            <article className={`variant-card${isApplied ? " is-applied" : ""}`} key={variant.id}>
-                              <img alt={variant.id} className="variant-preview" src={renderVariantPreviewSource(variant)} />
-                              <div className="variant-meta">
-                                <strong>{variant.id}</strong>
-                                <span>{variant.previewUri}</span>
-                              </div>
-                              <button className="secondary-button" onClick={() => applyVariant(variant)} type="button">
-                                {isApplied ? copy.actions.applied : copy.actions.applyVariant}
-                              </button>
-                            </article>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p>{copy.messages.noVariants}</p>
-                    )}
-                  </div>
-                </div>
+                <ImageRefinementPanel
+                  appliedVariantId={regenerateState.appliedVariantId}
+                  currentAssetLabel={copy.labels.currentAsset}
+                  currentAssetUri={selectedNode.asset.uri}
+                  currentPreviewSrc={renderCurrentImagePreview()}
+                  feedback={regenerateState.feedback}
+                  language={language}
+                  nodeTitle={describeNode(selectedNode)}
+                  onApplyVariant={applyVariant}
+                  onFeedbackChange={(value) =>
+                    setRegenerateState((currentState) => ({
+                      ...currentState,
+                      feedback: value,
+                    }))
+                  }
+                  onPromptChange={(value) =>
+                    setRegenerateState((currentState) => ({
+                      ...currentState,
+                      prompt: value,
+                    }))
+                  }
+                  onRegenerate={handleRegenerate}
+                  prompt={regenerateState.prompt}
+                  regenerateMessage={regenerateState.message}
+                  regenerateMode={regenerateState.mode}
+                  regenerateStatus={regenerateState.status}
+                  regenerateSummary={getRegenerateSummary(language, regenerateState)}
+                  renderVariantPreviewSource={renderVariantPreviewSource}
+                  variants={regenerateState.response?.variants ?? []}
+                />
               ) : null}
             </>
           ) : (
