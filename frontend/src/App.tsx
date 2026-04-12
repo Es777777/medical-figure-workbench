@@ -15,6 +15,12 @@ import { requestAnalyzeAsset, requestAnalyzePrompt, requestReconstructFigure, re
 import { UI_COPY, type Language } from "./copy";
 import { getElementLibrary, getLibraryCategories, getRecommendedLibraryItems, searchLibraryItems, type LibraryCategoryId } from "./element-library";
 import { EditorCanvas } from "./EditorCanvas";
+import { ExportCenter } from "./features/export/ExportCenter";
+import { ImportWorkbench } from "./features/import-session/ImportWorkbench";
+import { createImportSession, setImportMode as applyImportMode, setPanelDecision as applyPanelDecision } from "./features/import-session/state";
+import type { ImportMode, ImportSession } from "./features/import-session/types";
+import { SplitReviewPanel } from "./features/import-session/SplitReviewPanel";
+import { ResourceBrowser } from "./features/resources/ResourceBrowser";
 import {
   attachBackendDrafts,
   analyzeFigureFile,
@@ -531,6 +537,7 @@ export function App() {
   const [reconstructState, setReconstructState] = useState<ReconstructState>(initialReconstructState);
   const [regenerateState, setRegenerateState] = useState<RegenerateState>(initialRegenerateState);
   const [figureWorkbenchState, setFigureWorkbenchState] = useState<FigureWorkbenchState>(initialFigureWorkbenchState);
+  const [importSession, setImportSession] = useState<ImportSession | null>(null);
   const [canvasScale, setCanvasScale] = useState<number>(1);
   const [hasManualZoom, setHasManualZoom] = useState<boolean>(false);
   const [flowInput, setFlowInput] = useState<string>("感染\n炎症\n器官损伤\n修复");
@@ -565,6 +572,13 @@ export function App() {
     const context = `${selectedNode?.name ?? ""} ${figureWorkbenchState.analysis?.mergedRecognizedText ?? ""} ${figureWorkbenchState.analysis?.recommendedPrompt ?? ""}`;
     return getRecommendedLibraryItems(language, context).slice(0, 6);
   }, [figureWorkbenchState.analysis, language, selectedNode]);
+  const reviewPanels = useMemo(() => {
+    const decisionMap = new Map(importSession?.panels.map((panel) => [panel.id, panel.decision]));
+    return (figureWorkbenchState.analysis?.panels ?? []).map((panel) => ({
+      ...panel,
+      decision: decisionMap.get(panel.id) ?? "pending",
+    }));
+  }, [figureWorkbenchState.analysis, importSession]);
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -808,7 +822,9 @@ export function App() {
     }));
 
     try {
-      let analysis = await analyzeFigureFile(file, figureWorkbenchState.contextNotes, language);
+      const currentImportMode = importSession?.importMode ?? "auto";
+      setImportSession(createImportSession({ fileName: file.name, sourceDataUrl: URL.createObjectURL(file) }));
+      let analysis = await analyzeFigureFile(file, figureWorkbenchState.contextNotes, language, currentImportMode);
       if (composeRequest) {
         const draftResult = await requestAnalyzeAsset({
           requestId: makeRequestId("req_asset_draft"),
@@ -830,6 +846,14 @@ export function App() {
         semanticMessage: "",
         error: "",
       }));
+      setImportSession((currentSession) =>
+        currentSession
+          ? {
+              ...currentSession,
+              panels: analysis.panels.map((panel) => ({ id: panel.id, label: panel.label, decision: "pending" })),
+            }
+          : currentSession,
+      );
     } catch (error) {
       setFigureWorkbenchState((currentState) => ({
         ...currentState,
@@ -842,6 +866,23 @@ export function App() {
         error: error instanceof Error ? error.message : "Could not analyze the selected figure.",
       }));
     }
+  }
+
+  function handleImportModeChange(mode: ImportMode) {
+    setImportSession((currentSession) => {
+      if (currentSession) {
+        return applyImportMode(currentSession, mode);
+      }
+
+      return {
+        ...createImportSession({ fileName: "", sourceDataUrl: "" }),
+        importMode: mode,
+      };
+    });
+  }
+
+  function handlePanelDecision(panelId: string, decision: "keep" | "ignore") {
+    setImportSession((currentSession) => (currentSession ? applyPanelDecision(currentSession, panelId, decision) : currentSession));
   }
 
   function handleImportDetectedPanels() {
@@ -890,6 +931,34 @@ export function App() {
       matchedNodeId: scene?.nodes.find((node) => node.name === targetPanel.label)?.id ?? null,
       revealVersion: Date.now(),
     });
+  }
+
+  function handleSaveProject() {
+    if (!scene) {
+      return;
+    }
+    window.localStorage.setItem("medical-figure-workbench:scene", JSON.stringify(scene));
+  }
+
+  function handleLoadProject() {
+    const raw = window.localStorage.getItem("medical-figure-workbench:scene");
+    if (!raw) {
+      return;
+    }
+
+    setScene(JSON.parse(raw) as SceneGraph);
+  }
+
+  function handleExportPng() {
+    const canvasElement = canvasViewportRef.current?.querySelector("canvas");
+    if (!(canvasElement instanceof HTMLCanvasElement)) {
+      return;
+    }
+
+    const anchor = document.createElement("a");
+    anchor.href = canvasElement.toDataURL("image/png");
+    anchor.download = `${scene?.id ?? "medical-figure-workbench"}.png`;
+    anchor.click();
   }
 
   async function handleAnalyzeImportedSemantics() {
@@ -1641,40 +1710,35 @@ export function App() {
           <div className="property-block figure-workbench-block">
             <p className="section-label">{copy.sections.figureWorkbench}</p>
             <p className="library-hint">{copy.messages.figureWorkbenchHint}</p>
-            <div className="import-workflow-card">
-              <strong>{copy.labels.importWorkflow}</strong>
-              <p>{copy.messages.quickImportHint}</p>
-            </div>
-            <input accept="image/*" hidden onChange={handleFigureFileSelected} ref={figureFileInputRef} type="file" />
-            <label>
-              <span>{copy.labels.contextNotes}</span>
-              <textarea
-                onChange={(event) => setFigureWorkbenchState((currentState) => ({ ...currentState, contextNotes: event.target.value }))}
-                rows={4}
-                value={figureWorkbenchState.contextNotes}
-              />
-            </label>
-            <div className="prompt-actions-row">
-              <button className="primary-button" onClick={triggerFigureFilePicker} type="button">
-                {copy.actions.parseAndSplitFigure}
-              </button>
-              <button
-                className="secondary-button"
-                disabled={!figureWorkbenchState.analysis}
-                onClick={handleImportDetectedPanels}
-                type="button"
-              >
-                {figureWorkbenchState.analysis?.backendDrafts ? copy.actions.autoImport : copy.actions.importPanels}
-              </button>
-              <button
-                className="secondary-button"
-                disabled={!figureWorkbenchState.analysis || figureWorkbenchState.semanticStatus === "loading"}
-                onClick={handleAnalyzeImportedSemantics}
-                type="button"
-              >
-                {copy.actions.analyzeImportedSemantics}
-              </button>
-            </div>
+            <ImportWorkbench
+              contextNotes={figureWorkbenchState.contextNotes}
+              fileInputRef={figureFileInputRef}
+              importMode={importSession?.importMode ?? "auto"}
+              language={language}
+              onChangeContextNotes={(value) => setFigureWorkbenchState((currentState) => ({ ...currentState, contextNotes: value }))}
+              onChangeImportMode={handleImportModeChange}
+              onFileSelected={handleFigureFileSelected}
+              onPickFile={triggerFigureFilePicker}
+            >
+              <div className="prompt-actions-row">
+                <button
+                  className="secondary-button"
+                  disabled={!figureWorkbenchState.analysis}
+                  onClick={handleImportDetectedPanels}
+                  type="button"
+                >
+                  {figureWorkbenchState.analysis?.backendDrafts ? copy.actions.autoImport : copy.actions.importPanels}
+                </button>
+                <button
+                  className="secondary-button"
+                  disabled={!figureWorkbenchState.analysis || figureWorkbenchState.semanticStatus === "loading"}
+                  onClick={handleAnalyzeImportedSemantics}
+                  type="button"
+                >
+                  {copy.actions.analyzeImportedSemantics}
+                </button>
+              </div>
+            </ImportWorkbench>
             <div className="response-panel compact-response-panel figure-workbench-response">
               <div className="response-header">
                 <strong>{copy.labels.sourceFigure}</strong>
@@ -1734,54 +1798,14 @@ export function App() {
                   <div className="response-subsection">
                     <strong>{copy.labels.detectedPanels}</strong>
                     {figureWorkbenchState.analysis.panels.length === 1 ? <p className="technical-note">{copy.messages.singlePanelDetected}</p> : null}
-                    <div className="figure-panel-grid split-result-grid">
-                      {figureWorkbenchState.analysis.panels.map((panel) => (
-                        <article className="figure-panel-card split-result-card" key={panel.id}>
-                          <img alt={panel.label} className="figure-panel-preview" src={panel.previewUri} />
-                          <div className="figure-panel-meta">
-                            <strong>{panel.label}</strong>
-                            <span>{panel.roleHint}</span>
-                            <span>
-                              {Math.round(panel.bbox.width)} x {Math.round(panel.bbox.height)}
-                            </span>
-                            <span>confidence {Math.round(panel.confidence * 100)}%</span>
-                          </div>
-                          <div className="prompt-actions-row">
-                            <button className="secondary-button" onClick={() => handleImportSinglePanel(panel.id)} type="button">
-                              {copy.actions.importSinglePanel}
-                            </button>
-                            <button className="secondary-button" onClick={() => handleFocusPanel(panel.id)} type="button">
-                              {copy.actions.previewPanel}
-                            </button>
-                          </div>
-                          {panel.semanticHints.length > 0 ? (
-                            <div className="figure-panel-hints">
-                              <span>{copy.labels.semanticHints}</span>
-                              <div className="token-list">
-                                {panel.semanticHints.map((hint) => (
-                                  <span className="token-chip relation-chip" key={`${panel.id}-${hint.id}`}>
-                                    {hint.label}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          ) : null}
-                          {panel.recognizedText ? (
-                            <div className="figure-panel-hints">
-                              <span>
-                                {copy.labels.recognizedText}
-                                {panel.textConfidence !== null ? ` · ${panel.textConfidence}%` : ""}
-                              </span>
-                              <p className="figure-panel-text">{panel.recognizedText}</p>
-                            </div>
-                          ) : (
-                            <div className="figure-panel-hints">
-                              <span>{copy.labels.noOcrText}</span>
-                            </div>
-                          )}
-                        </article>
-                      ))}
-                    </div>
+                    <SplitReviewPanel
+                      language={language}
+                      onIgnore={(panelId) => handlePanelDecision(panelId, "ignore")}
+                      onImportSingle={handleImportSinglePanel}
+                      onKeep={(panelId) => handlePanelDecision(panelId, "keep")}
+                      onPreview={handleFocusPanel}
+                      panels={reviewPanels}
+                    />
                   </div>
                   {figureWorkbenchState.semanticMessage ? <p className="technical-note">{figureWorkbenchState.semanticMessage}</p> : null}
                 </>
@@ -1794,25 +1818,20 @@ export function App() {
           <div className="property-block resource-block">
             <p className="section-label">{copy.sections.resources}</p>
             <p className="library-hint">{copy.messages.resourcesHint}</p>
-            {recommendedLibraryItems.length > 0 ? (
-              <div className="recommended-strip">
-                <strong>{language === "zh-CN" ? "推荐给当前内容" : "Recommended for current content"}</strong>
-                <div className="library-grid recommended-grid">
-                  {recommendedLibraryItems.map((item) => (
-                    <article className="library-card" key={`recommended-${item.id}`}>
-                      <img alt={item.label} className="library-preview" src={item.previewUri} />
-                      <div className="library-meta">
-                        <strong>{item.label}</strong>
-                        <span>{item.assetUri}</span>
-                      </div>
-                      <button className="secondary-button" onClick={() => handleLibraryApply(item.assetUri, item.label)} type="button">
-                        {libraryActionLabel}
-                      </button>
-                    </article>
-                  ))}
-                </div>
-              </div>
-            ) : null}
+            <ResourceBrowser
+              actionLabel={libraryActionLabel}
+              activeCategory={libraryCategory}
+              allLabel={language === "zh-CN" ? "全部" : "All"}
+              categories={libraryCategories}
+              filteredItems={filteredLibraryItems}
+              onApply={handleLibraryApply}
+              onChangeCategory={setLibraryCategory}
+              onChangeQuery={setLibraryQuery}
+              query={libraryQuery}
+              recommendedItems={recommendedLibraryItems}
+              recommendedLabel={copy.labels.recommendedResources}
+              searchPlaceholder={language === "zh-CN" ? "搜索医学素材" : "Search medical assets"}
+            />
             <div className="resource-grid">
               {MEDICAL_RESOURCE_CARDS.map((resource) => (
                 <article className="resource-card" key={resource.id}>
@@ -1830,43 +1849,6 @@ export function App() {
                   <a className="resource-link" href={resource.url} rel="noreferrer" target="_blank">
                     {resource.url}
                   </a>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="property-block library-block">
-            <p className="section-label">{copy.sections.library}</p>
-            <p className="library-hint">{copy.messages.libraryHint}</p>
-            <div className="library-toolbar">
-              <input onChange={(event) => setLibraryQuery(event.target.value)} placeholder={language === "zh-CN" ? "搜索医学素材" : "Search medical assets"} type="text" value={libraryQuery} />
-              <div className="library-filters">
-                <button className={`secondary-button${libraryCategory === "all" ? " is-current-decision" : ""}`} onClick={() => setLibraryCategory("all")} type="button">
-                  {language === "zh-CN" ? "全部" : "All"}
-                </button>
-                {libraryCategories.map((category) => (
-                  <button
-                    className={`secondary-button${libraryCategory === category.id ? " is-current-decision" : ""}`}
-                    key={category.id}
-                    onClick={() => setLibraryCategory(category.id)}
-                    type="button"
-                  >
-                    {category.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="library-grid">
-              {filteredLibraryItems.map((item) => (
-                <article className="library-card" key={item.id}>
-                  <img alt={item.label} className="library-preview" src={item.previewUri} />
-                  <div className="library-meta">
-                    <strong>{item.label}</strong>
-                    <span>{item.assetUri}</span>
-                  </div>
-                  <button className="secondary-button" onClick={() => handleLibraryApply(item.assetUri, item.label)} type="button">
-                    {libraryActionLabel}
-                  </button>
                 </article>
               ))}
             </div>
@@ -2013,6 +1995,20 @@ export function App() {
                     value={zIndexMeta?.value ?? ""}
                   />
                 </label>
+              </div>
+
+              <div className="property-block export-block">
+                <p className="section-label">{language === "zh-CN" ? "导出与恢复" : "Export & Recovery"}</p>
+                <ExportCenter
+                  exportLabel={copy.actions.exportJson}
+                  exportPngLabel={copy.actions.exportPng}
+                  loadLabel={copy.actions.loadProject}
+                  onExportPng={handleExportPng}
+                  onLoadProject={handleLoadProject}
+                  onSaveProject={handleSaveProject}
+                  saveLabel={copy.actions.saveProject}
+                  scene={scene}
+                />
               </div>
 
               {isTextNode(selectedNode) ? (

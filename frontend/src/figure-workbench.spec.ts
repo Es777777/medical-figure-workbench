@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SceneGraph } from "@shared/scene-graph";
 
 import { buildPanelResourceRecommendations, insertSingleFigurePanelIntoScene } from "./figure-workbench";
+import { buildSplitRectsForMode } from "./figure-workbench";
 
 const scene = {
   id: "scene_test",
@@ -22,6 +23,17 @@ const scene = {
 } satisfies SceneGraph;
 
 describe("figure workbench helpers", () => {
+  it("creates two vertical panels for horizontal mode", () => {
+    const rects = buildSplitRectsForMode(1200, 600, "horizontal");
+    expect(rects).toHaveLength(2);
+    expect(rects[0]?.width).toBe(600);
+  });
+
+  it("creates four panels for grid mode", () => {
+    const rects = buildSplitRectsForMode(1200, 800, "grid");
+    expect(rects).toHaveLength(4);
+  });
+
   it("recommends relevant assets from panel hints", () => {
     const results = buildPanelResourceRecommendations(
       {

@@ -35,6 +35,12 @@ type CopyBundle = {
     autoImport: string;
     importSinglePanel: string;
     previewPanel: string;
+    keepPanel: string;
+    ignorePanel: string;
+    saveProject: string;
+    loadProject: string;
+    exportJson: string;
+    exportPng: string;
     analyzePrompt: string;
     applyStructure: string;
     reconstructFigure: string;
@@ -89,12 +95,14 @@ type CopyBundle = {
     recommendedPrompt: string;
     sourceFigure: string;
     importWorkflow: string;
+    importMode: string;
     semanticHints: string;
     recognizedText: string;
     resourceLicense: string;
     bestFor: string;
     backendDrafts: string;
     noOcrText: string;
+    recommendedResources: string;
   };
   messages: {
     noRegenerateRequest: string;
@@ -112,6 +120,7 @@ type CopyBundle = {
     noFigureAnalysis: string;
     analyzingFigure: string;
     singlePanelDetected: string;
+    importModesHint: string;
     resourcesHint: string;
     promptHint: string;
     noPromptAnalysis: string;
@@ -157,6 +166,12 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       autoImport: "Auto-import analyzed scene",
       importSinglePanel: "Import only this panel",
       previewPanel: "Preview focus",
+      keepPanel: "Keep",
+      ignorePanel: "Ignore",
+      saveProject: "Save project",
+      loadProject: "Load project",
+      exportJson: "Export JSON",
+      exportPng: "Export PNG",
       analyzePrompt: "Analyze prompt",
       applyStructure: "Apply structure",
       reconstructFigure: "Reconstruct figure",
@@ -211,12 +226,14 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       recommendedPrompt: "Recommended prompt",
       sourceFigure: "Source figure",
       importWorkflow: "Import workflow",
+      importMode: "Import mode",
       semanticHints: "Semantic hints",
       recognizedText: "Recognized text",
       resourceLicense: "License",
       bestFor: "Best for",
       backendDrafts: "Backend drafts",
       noOcrText: "No OCR text",
+      recommendedResources: "Recommended resources",
     },
     messages: {
       noRegenerateRequest: "No regenerate request yet.",
@@ -234,6 +251,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       noFigureAnalysis: "No imported figure analysis yet.",
       analyzingFigure: "Analyzing the uploaded figure in-browser. OCR can take a few seconds on larger images.",
       singlePanelDetected: "Only one panel was detected. This usually means the figure has no large whitespace separators, so the full image is being treated as one editable panel.",
+      importModesHint: "Choose automatic detection for typical manuscript figures, or force a manual split when the source image has weak panel boundaries.",
       resourcesHint: "These external sources are useful when a medical paper figure needs licensable, citation-friendly assets instead of placeholders.",
       promptHint: "Describe the figure as a whole. The planner will extract entities, relations, and suggested elements instead of forcing one step per line.",
       noPromptAnalysis: "No structured prompt analysis yet.",
@@ -283,6 +301,12 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       autoImport: "自动导入分析场景",
       importSinglePanel: "只导入当前分图",
       previewPanel: "预览定位",
+      keepPanel: "保留",
+      ignorePanel: "忽略",
+      saveProject: "保存项目",
+      loadProject: "加载项目",
+      exportJson: "导出 JSON",
+      exportPng: "导出 PNG",
       analyzePrompt: "分析 Prompt",
       applyStructure: "应用结构",
       reconstructFigure: "重构当前图",
@@ -337,12 +361,14 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       recommendedPrompt: "推荐 Prompt",
       sourceFigure: "来源图片",
       importWorkflow: "导入流程",
+      importMode: "导入模式",
       semanticHints: "语义提示",
       recognizedText: "识别文本",
       resourceLicense: "许可",
       bestFor: "适用场景",
       backendDrafts: "后端草稿",
       noOcrText: "暂无 OCR 文本",
+      recommendedResources: "推荐资源",
     },
     messages: {
       noRegenerateRequest: "还没有发起生成请求。",
@@ -360,6 +386,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       noFigureAnalysis: "还没有导入图像分析结果。",
       analyzingFigure: "浏览器正在解析上传图片。对于较大的图片，OCR 可能需要几秒钟。",
       singlePanelDetected: "当前只检测到 1 个分图。这通常表示原图没有明显留白分隔，因此整张图被当作一个可编辑分图处理。",
+      importModesHint: "典型论文图可优先用自动识别；如果原图分图边界不明显，可直接指定手动拆分模式。",
       resourcesHint: "当论文图需要更严谨、可引用、可授权的医学素材时，可优先从这些外部资源挑选。",
       promptHint: "用自然语言描述整张图，规划器会自动抽取实体、关系和建议元素，而不是要求你逐步拆成一行一行。",
       noPromptAnalysis: "还没有结构化 Prompt 分析结果。",

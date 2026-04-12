@@ -91,6 +91,24 @@ button {
   padding: var(--space-4);
 }
 
+.import-workbench,
+.resource-browser,
+.split-review-panel {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.import-mode-grid {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.import-mode-block {
+  display: grid;
+  gap: var(--space-2);
+}
+
 .panel {
   background: rgba(251, 250, 247, 0.92);
   border: 1px solid var(--color-border);
@@ -799,6 +817,16 @@ button {
 
 .recommended-grid {
   max-height: 22rem;
+}
+
+.split-result-card.is-ignored {
+  opacity: 0.5;
+}
+
+.export-center {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 .advanced-tools-block details {

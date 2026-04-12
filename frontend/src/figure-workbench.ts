@@ -3,6 +3,7 @@ import type { SceneGraph, SceneNode } from "@shared/scene-graph";
 
 import type { Language } from "./copy";
 import { getElementLibrary, getLibraryItemById } from "./element-library";
+import type { ImportMode } from "./features/import-session/types";
 
 export type FigureSemanticHint = {
   id: string;
@@ -287,6 +288,41 @@ function estimateRectDifference(left: Rect, right: Rect): number {
   return Math.abs(left.x - right.x) + Math.abs(left.y - right.y) + Math.abs(left.width - right.width) + Math.abs(left.height - right.height);
 }
 
+export function buildSplitRectsForMode(width: number, height: number, mode: ImportMode): Rect[] {
+  if (mode === "single") {
+    return [{ x: 0, y: 0, width, height }];
+  }
+
+  if (mode === "horizontal") {
+    const halfWidth = Math.floor(width / 2);
+    return [
+      { x: 0, y: 0, width: halfWidth, height },
+      { x: halfWidth, y: 0, width: width - halfWidth, height },
+    ];
+  }
+
+  if (mode === "vertical") {
+    const halfHeight = Math.floor(height / 2);
+    return [
+      { x: 0, y: 0, width, height: halfHeight },
+      { x: 0, y: halfHeight, width, height: height - halfHeight },
+    ];
+  }
+
+  if (mode === "grid") {
+    const halfWidth = Math.floor(width / 2);
+    const halfHeight = Math.floor(height / 2);
+    return [
+      { x: 0, y: 0, width: halfWidth, height: halfHeight },
+      { x: halfWidth, y: 0, width: width - halfWidth, height: halfHeight },
+      { x: 0, y: halfHeight, width: halfWidth, height: height - halfHeight },
+      { x: halfWidth, y: halfHeight, width: width - halfWidth, height: height - halfHeight },
+    ];
+  }
+
+  return [];
+}
+
 function buildFallbackGridRects(width: number, height: number): Rect[] {
   const aspectRatio = width / Math.max(height, 1);
   if (width < MIN_PANEL_SIZE * 2 || height < MIN_PANEL_SIZE * 2) {
@@ -450,7 +486,7 @@ function buildRecommendedPrompt(
     .join(language === "zh-CN" ? "。" : ". ");
 }
 
-export async function analyzeFigureFile(file: File, contextNotes: string, language: Language): Promise<FigureWorkbenchAnalysis> {
+export async function analyzeFigureFile(file: File, contextNotes: string, language: Language, importMode: ImportMode = "auto"): Promise<FigureWorkbenchAnalysis> {
   const sourceDataUrl = await fileToDataUrl(file);
   const image = await loadImageElement(sourceDataUrl);
   const naturalWidth = image.naturalWidth || image.width;
@@ -486,10 +522,11 @@ export async function analyzeFigureFile(file: File, contextNotes: string, langua
   }
 
   const readingOrderRects = sortRectsReadingOrder(uniqueRects).slice(0, MAX_PANEL_COUNT);
-  const resolvedRects =
+  const autoResolvedRects =
     readingOrderRects.length === 1 && estimateRectDifference(readingOrderRects[0], { x: 0, y: 0, width: naturalWidth, height: naturalHeight }) < 32
       ? buildFallbackGridRects(naturalWidth, naturalHeight)
       : readingOrderRects;
+  const resolvedRects = importMode === "auto" ? autoResolvedRects : buildSplitRectsForMode(naturalWidth, naturalHeight, importMode);
   const detectedKeywords = extractDetectedKeywords(file.name, contextNotes, language);
 
   const panelDrafts = resolvedRects.map((rect, index) => {
