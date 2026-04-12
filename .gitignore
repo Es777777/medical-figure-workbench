@@ -8,3 +8,14 @@ venv/
 *.log
 Thumbs.db
 .DS_Store
+.playwright-mcp/
+.tmp_ccswitch_pkg/
+*.tgz
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.tif
+*.tiff
+fastapi-ref/
+openai-python-ref/
