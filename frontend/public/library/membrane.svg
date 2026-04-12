@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" width="320" height="220">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#edf0f5" />
+      <stop offset="100%" stop-color="#dfe4ed" />
+    </linearGradient>
+    <linearGradient id="mem" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7f8bb0" />
+      <stop offset="100%" stop-color="#5c6a8a" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="220" rx="24" fill="url(#bg)" />
+  <g transform="translate(160, 110)">
+    <path d="M-70,-15 C-45,-35 -20,-35 0,-15 C20,5 45,5 70,-15" fill="none" stroke="url(#mem)" stroke-width="8" stroke-linecap="round" />
+    <path d="M-70,15 C-45,35 -20,35 0,15 C20,-5 45,-5 70,15" fill="none" stroke="url(#mem)" stroke-width="8" stroke-linecap="round" />
+    <circle cx="-35" cy="-25" r="5" fill="#5c6a8a" fill-opacity="0.5" />
+    <circle cx="0" cy="-15" r="5" fill="#5c6a8a" fill-opacity="0.5" />
+    <circle cx="35" cy="-25" r="5" fill="#5c6a8a" fill-opacity="0.5" />
+    <circle cx="-35" cy="25" r="5" fill="#5c6a8a" fill-opacity="0.5" />
+    <circle cx="0" cy="15" r="5" fill="#5c6a8a" fill-opacity="0.5" />
+    <circle cx="35" cy="25" r="5" fill="#5c6a8a" fill-opacity="0.5" />
+  </g>
+</svg>

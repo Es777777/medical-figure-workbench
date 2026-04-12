@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" width="320" height="220">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fdecea" />
+      <stop offset="100%" stop-color="#f9dbd8" />
+    </linearGradient>
+    <linearGradient id="inflam" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#d45f4b" />
+      <stop offset="100%" stop-color="#b84232" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="220" rx="24" fill="url(#bg)" />
+  <g transform="translate(160, 110)">
+    <path d="M0,-45 C20,-45 35,-30 35,-10 C35,10 20,25 0,35 C-20,25 -35,10 -35,-10 C-35,-30 -20,-45 0,-45Z" fill="url(#inflam)" fill-opacity="0.2" stroke="#b84232" stroke-width="3" />
+    <path d="M0,-25 C10,-25 18,-18 18,-8 C18,2 10,10 0,18 C-10,10 -18,2 -18,-8 C-18,-18 -10,-25 0,-25Z" fill="#b84232" fill-opacity="0.4" />
+    <circle cx="0" cy="-5" r="6" fill="#b84232" fill-opacity="0.6" />
+    <path d="M-25,-20 L-35,-35" stroke="#b84232" stroke-width="3" stroke-linecap="round" />
+    <path d="M25,-20 L35,-35" stroke="#b84232" stroke-width="3" stroke-linecap="round" />
+    <path d="M-25,10 L-35,25" stroke="#b84232" stroke-width="3" stroke-linecap="round" />
+    <path d="M25,10 L35,25" stroke="#b84232" stroke-width="3" stroke-linecap="round" />
+  </g>
+</svg>

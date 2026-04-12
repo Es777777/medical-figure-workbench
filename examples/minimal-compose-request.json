@@ -1,0 +1,156 @@
+{
+  "requestId": "req_demo_001",
+  "documentId": "doc_demo_001",
+  "scene": {
+    "id": "scene_demo_001",
+    "version": 1,
+    "kind": "scientific-figure",
+    "canvas": {
+      "width": 1270,
+      "height": 852,
+      "backgroundColor": "#FFFFFF"
+    },
+    "source": {
+      "assetId": "asset_source_001",
+      "originalUri": "/uploads/original/Graphical Abstract Image.tif",
+      "normalizedUri": "/uploads/normalized/Graphical Abstract Image.png",
+      "originalDetectedFormat": "TIFF",
+      "normalizedMimeType": "image/png",
+      "width": 1270,
+      "height": 852
+    },
+    "nodes": [
+      {
+        "id": "panel_main",
+        "type": "panel",
+        "name": "Main Panel",
+        "zIndex": 1,
+        "transform": {
+          "x": 0,
+          "y": 0,
+          "width": 1270,
+          "height": 852
+        },
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1270,
+          "height": 852
+        },
+        "createdAt": "2026-04-03T00:00:00.000Z",
+        "updatedAt": "2026-04-03T00:00:00.000Z",
+        "title": "Mechanism Overview",
+        "layout": "free"
+      },
+      {
+        "id": "img_kidney_001",
+        "type": "image",
+        "name": "Kidney Icon",
+        "parentId": "panel_main",
+        "zIndex": 10,
+        "transform": {
+          "x": 940,
+          "y": 240,
+          "width": 120,
+          "height": 120
+        },
+        "bbox": {
+          "x": 940,
+          "y": 240,
+          "width": 120,
+          "height": 120
+        },
+        "createdAt": "2026-04-03T00:00:00.000Z",
+        "updatedAt": "2026-04-03T00:00:00.000Z",
+        "asset": {
+          "assetId": "asset_kidney_001",
+          "uri": "/assets/generated/kidney.svg",
+          "mimeType": "image/svg+xml",
+          "width": 120,
+          "height": 120,
+          "sourceKind": "generated"
+        },
+        "editableMode": {
+          "move": true,
+          "resize": true,
+          "crop": true,
+          "regenerate": true,
+          "replaceAsset": true
+        }
+      },
+      {
+        "id": "text_aki_001",
+        "type": "text",
+        "name": "AKI Label",
+        "parentId": "panel_main",
+        "zIndex": 20,
+        "transform": {
+          "x": 930,
+          "y": 370,
+          "width": 140,
+          "height": 30
+        },
+        "bbox": {
+          "x": 930,
+          "y": 370,
+          "width": 140,
+          "height": 30
+        },
+        "createdAt": "2026-04-03T00:00:00.000Z",
+        "updatedAt": "2026-04-03T00:00:00.000Z",
+        "text": "AKI",
+        "style": {
+          "fontFamily": "Arial",
+          "fontSize": 24,
+          "color": "#1F2937",
+          "align": "center"
+        },
+        "editableMode": {
+          "move": true,
+          "resize": true,
+          "editText": true,
+          "editStyle": true,
+          "regenerate": false
+        }
+      },
+      {
+        "id": "arrow_001",
+        "type": "arrow",
+        "name": "Outcome Arrow",
+        "parentId": "panel_main",
+        "zIndex": 15,
+        "transform": {
+          "x": 820,
+          "y": 290,
+          "width": 110,
+          "height": 40
+        },
+        "bbox": {
+          "x": 820,
+          "y": 290,
+          "width": 110,
+          "height": 40
+        },
+        "createdAt": "2026-04-03T00:00:00.000Z",
+        "updatedAt": "2026-04-03T00:00:00.000Z",
+        "points": [
+          { "x": 820, "y": 310 },
+          { "x": 930, "y": 310 }
+        ],
+        "semantics": "promote",
+        "style": {
+          "stroke": "#2563EB",
+          "strokeWidth": 3,
+          "headEnd": "arrow"
+        },
+        "editableMode": {
+          "move": true,
+          "reshape": true,
+          "editStyle": true,
+          "regenerate": false
+        }
+      }
+    ]
+  },
+  "exportFormats": ["png", "svg", "json"]
+}

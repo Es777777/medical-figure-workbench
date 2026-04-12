@@ -1,0 +1,86 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - paragraph [ref=e6]: 科研机制图拼装器
+      - heading "最小 Fabric 编辑器" [level=1] [ref=e7]
+      - paragraph [ref=e8]: 加载现有 SceneGraph 示例，沿用当前后端路由，并把重点放在第一条真正有用的编辑闭环上。
+    - generic [ref=e9]:
+      - group "语言切换" [ref=e10]:
+        - button "EN" [ref=e11] [cursor=pointer]
+        - button "中文" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - term [ref=e15]: 示例数据
+          - definition [ref=e16]: examples/minimal-compose-request.json
+        - generic [ref=e17]:
+          - term [ref=e18]: 画布
+          - definition [ref=e19]: 1270 × 852
+        - generic [ref=e20]:
+          - term [ref=e21]: 来源
+          - definition [ref=e22]: /uploads/normalized/Graphical Abstract Image.png
+        - generic [ref=e23]:
+          - term [ref=e24]: 生成路由
+          - definition [ref=e25]: /regenerate-node
+  - main [ref=e26]:
+    - complementary [ref=e27]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: 图层
+        - heading "4 个节点" [level=2] [ref=e31]
+      - list [ref=e32]:
+        - button "AKI Label 文字 · z20" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]:
+            - strong [ref=e35]: AKI Label
+            - generic [ref=e36]: 文字 · z20
+        - button "Outcome Arrow 箭头 · z15" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]:
+            - strong [ref=e39]: Outcome Arrow
+            - generic [ref=e40]: 箭头 · z15
+        - button "Kidney Icon 图片 · z10" [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]:
+            - strong [ref=e43]: Kidney Icon
+            - generic [ref=e44]: 图片 · z10
+        - button "Main Panel 面板 · z1" [ref=e45] [cursor=pointer]:
+          - generic [ref=e46]:
+            - strong [ref=e47]: Main Panel
+            - generic [ref=e48]: 面板 · z1
+      - generic [ref=e49]:
+        - button "上移一层" [disabled] [ref=e50]
+        - button "下移一层" [ref=e51] [cursor=pointer]
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - paragraph [ref=e55]: 画布
+        - heading "图片节点可直接拖角缩放，拖动可改位置，右侧属性面板负责精确数值。" [level=2] [ref=e56]
+      - generic [ref=e57]: "当前选中: AKI Label"
+    - complementary [ref=e63]:
+      - generic [ref=e65]:
+        - paragraph [ref=e66]: 属性
+        - heading "AKI Label" [level=2] [ref=e67]
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]: 类型
+          - textbox "类型" [ref=e71]: 文字
+        - generic [ref=e72]:
+          - generic [ref=e73]: X 坐标
+          - spinbutton "X 坐标" [ref=e74]: "930"
+        - generic [ref=e75]:
+          - generic [ref=e76]: Y 坐标
+          - spinbutton "Y 坐标" [ref=e77]: "370"
+        - generic [ref=e78]:
+          - generic [ref=e79]: 宽度
+          - spinbutton "宽度" [ref=e80]: "140"
+        - generic [ref=e81]:
+          - generic [ref=e82]: 高度
+          - spinbutton "高度" [disabled] [ref=e83]: "30"
+        - generic [ref=e84]:
+          - generic [ref=e85]: 层级
+          - spinbutton "层级" [ref=e86]: "20"
+      - generic [ref=e87]:
+        - generic [ref=e88]:
+          - generic [ref=e89]: 文字
+          - textbox "文字" [ref=e90]: AKI
+        - generic [ref=e91]:
+          - generic [ref=e92]: 字号
+          - spinbutton "字号" [ref=e93]: "24"
+        - generic [ref=e94]:
+          - generic [ref=e95]: 颜色
+          - textbox "颜色" [ref=e96]: "#1f2937"

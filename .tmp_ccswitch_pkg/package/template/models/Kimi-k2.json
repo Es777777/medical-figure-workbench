@@ -1,0 +1,11 @@
+{
+    "env": {
+        "ANTHROPIC_BASE_URL": "https://api.moonshot.cn/anthropic",
+        "ANTHROPIC_AUTH_TOKEN": "<API_KEY>",
+        "ANTHROPIC_MODEL": "kimi-k2-thinking",
+        "ANTHROPIC_SMALL_FAST_MODEL": "kimi-k2-thinking",
+        "ANTHROPIC_DEFAULT_HAIKU_MODEL": "kimi-k2-thinking",
+        "ANTHROPIC_DEFAULT_SONNET_MODEL": "kimi-k2-thinking",
+        "ANTHROPIC_DEFAULT_OPUS_MODEL": "kimi-k2-thinking"
+    }
+}

@@ -1,0 +1,132 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - paragraph [ref=e6]: 科研机制图拼装器
+      - heading "最小 Fabric 编辑器" [level=1] [ref=e7]
+      - paragraph [ref=e8]: 加载现有 SceneGraph 示例，沿用当前后端路由，并把重点放在第一条真正有用的编辑闭环上。
+    - generic [ref=e9]:
+      - group "语言切换" [ref=e10]:
+        - button "EN" [ref=e11] [cursor=pointer]
+        - button "中文" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - term [ref=e15]: 示例数据
+          - definition [ref=e16]: examples/minimal-compose-request.json
+        - generic [ref=e17]:
+          - term [ref=e18]: 画布
+          - definition [ref=e19]: 1270 × 852
+        - generic [ref=e20]:
+          - term [ref=e21]: 来源
+          - definition [ref=e22]: /uploads/normalized/Graphical Abstract Image.png
+        - generic [ref=e23]:
+          - term [ref=e24]: 生成路由
+          - definition [ref=e25]: /regenerate-node
+  - main [ref=e26]:
+    - complementary [ref=e27]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: 图层
+        - heading "4 个节点" [level=2] [ref=e31]
+      - list [ref=e32]:
+        - button "AKI Label 文字 · z20" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]:
+            - strong [ref=e35]: AKI Label
+            - generic [ref=e36]: 文字 · z20
+        - button "Outcome Arrow 箭头 · z15" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]:
+            - strong [ref=e39]: Outcome Arrow
+            - generic [ref=e40]: 箭头 · z15
+        - button "Kidney Icon 图片 · z10" [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]:
+            - strong [ref=e43]: Kidney Icon
+            - generic [ref=e44]: 图片 · z10
+        - button "Main Panel 面板 · z1" [ref=e45] [cursor=pointer]:
+          - generic [ref=e46]:
+            - strong [ref=e47]: Main Panel
+            - generic [ref=e48]: 面板 · z1
+      - generic [ref=e49]:
+        - button "上移一层" [disabled] [ref=e50]
+        - button "下移一层" [ref=e51] [cursor=pointer]
+      - generic [ref=e52]:
+        - paragraph [ref=e53]: 元素库
+        - paragraph [ref=e54]: 可以直接用预设元素替换当前图片节点；如果当前没有选中图片，也可以插入一个新的图片节点。
+        - generic [ref=e55]:
+          - article [ref=e56]:
+            - img "肾脏" [ref=e57]
+            - generic [ref=e58]:
+              - strong [ref=e59]: 肾脏
+              - generic [ref=e60]: preset://kidney-clean
+            - button "插入到画布" [ref=e61] [cursor=pointer]
+          - article [ref=e62]:
+            - img "线粒体" [ref=e63]
+            - generic [ref=e64]:
+              - strong [ref=e65]: 线粒体
+              - generic [ref=e66]: preset://mitochondria
+            - button "插入到画布" [ref=e67] [cursor=pointer]
+          - article [ref=e68]:
+            - img "细菌" [ref=e69]
+            - generic [ref=e70]:
+              - strong [ref=e71]: 细菌
+              - generic [ref=e72]: preset://bacteria
+            - button "插入到画布" [ref=e73] [cursor=pointer]
+          - article [ref=e74]:
+            - img "免疫细胞" [ref=e75]
+            - generic [ref=e76]:
+              - strong [ref=e77]: 免疫细胞
+              - generic [ref=e78]: preset://immune-cell
+            - button "插入到画布" [ref=e79] [cursor=pointer]
+          - article [ref=e80]:
+            - img "炎症反应" [ref=e81]
+            - generic [ref=e82]:
+              - strong [ref=e83]: 炎症反应
+              - generic [ref=e84]: preset://inflammation
+            - button "插入到画布" [ref=e85] [cursor=pointer]
+          - article [ref=e86]:
+            - img "保护屏障" [ref=e87]
+            - generic [ref=e88]:
+              - strong [ref=e89]: 保护屏障
+              - generic [ref=e90]: preset://protective-shield
+            - button "插入到画布" [ref=e91] [cursor=pointer]
+    - generic [ref=e93]:
+      - generic [ref=e94]:
+        - paragraph [ref=e95]: 画布
+        - heading "图片节点可直接拖角缩放，拖动可改位置，右侧属性面板负责精确数值。" [level=2] [ref=e96]
+      - generic [ref=e97]:
+        - generic [ref=e98]: "当前选中: AKI Label"
+        - group "缩放" [ref=e99]:
+          - button "缩小" [ref=e100] [cursor=pointer]
+          - button "重置" [ref=e101] [cursor=pointer]
+          - button "放大" [ref=e102] [cursor=pointer]
+          - generic [ref=e103]: 100%
+    - complementary [ref=e109]:
+      - generic [ref=e111]:
+        - paragraph [ref=e112]: 属性
+        - heading "AKI Label" [level=2] [ref=e113]
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]: 类型
+          - textbox "类型" [ref=e117]: 文字
+        - generic [ref=e118]:
+          - generic [ref=e119]: X 坐标
+          - spinbutton "X 坐标" [ref=e120]: "930"
+        - generic [ref=e121]:
+          - generic [ref=e122]: Y 坐标
+          - spinbutton "Y 坐标" [ref=e123]: "370"
+        - generic [ref=e124]:
+          - generic [ref=e125]: 宽度
+          - spinbutton "宽度" [ref=e126]: "140"
+        - generic [ref=e127]:
+          - generic [ref=e128]: 高度
+          - spinbutton "高度" [disabled] [ref=e129]: "30"
+        - generic [ref=e130]:
+          - generic [ref=e131]: 层级
+          - spinbutton "层级" [ref=e132]: "20"
+      - generic [ref=e133]:
+        - generic [ref=e134]:
+          - generic [ref=e135]: 文字
+          - textbox "文字" [ref=e136]: AKI
+        - generic [ref=e137]:
+          - generic [ref=e138]: 字号
+          - spinbutton "字号" [ref=e139]: "24"
+        - generic [ref=e140]:
+          - generic [ref=e141]: 颜色
+          - textbox "颜色" [ref=e142]: "#1f2937"

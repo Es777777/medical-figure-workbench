@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"],
+      "env": {},
+      "description": "Memory server for persistent conversation context"
+    }
+  }
+}

@@ -1,0 +1,148 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - paragraph [ref=e6]: 科研机制图拼装器
+      - heading "最小 Fabric 编辑器" [level=1] [ref=e7]
+      - paragraph [ref=e8]: 加载现有 SceneGraph 示例，沿用当前后端路由，并把重点放在第一条真正有用的编辑闭环上。
+    - generic [ref=e9]:
+      - group "语言切换" [ref=e10]:
+        - button "EN" [ref=e11] [cursor=pointer]
+        - button "中文" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - term [ref=e15]: 示例数据
+          - definition [ref=e16]: examples/minimal-compose-request.json
+        - generic [ref=e17]:
+          - term [ref=e18]: 画布
+          - definition [ref=e19]: 1270 × 852
+        - generic [ref=e20]:
+          - term [ref=e21]: 来源
+          - definition [ref=e22]: /uploads/normalized/Graphical Abstract Image.png
+        - generic [ref=e23]:
+          - term [ref=e24]: 生成路由
+          - definition [ref=e25]: /regenerate-node
+  - main [ref=e26]:
+    - complementary [ref=e27]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: 图层
+        - heading "5 个节点" [level=2] [ref=e143]
+      - list [ref=e32]:
+        - button "肾脏 图片 · z30" [ref=e144] [cursor=pointer]:
+          - generic [ref=e145]:
+            - strong [ref=e146]: 肾脏
+            - generic [ref=e147]: 图片 · z30
+        - button "AKI Label 文字 · z20" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]:
+            - strong [ref=e35]: AKI Label
+            - generic [ref=e36]: 文字 · z20
+        - button "Outcome Arrow 箭头 · z15" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]:
+            - strong [ref=e39]: Outcome Arrow
+            - generic [ref=e40]: 箭头 · z15
+        - button "Kidney Icon 图片 · z10" [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]:
+            - strong [ref=e43]: Kidney Icon
+            - generic [ref=e44]: 图片 · z10
+        - button "Main Panel 面板 · z1" [ref=e45] [cursor=pointer]:
+          - generic [ref=e46]:
+            - strong [ref=e47]: Main Panel
+            - generic [ref=e48]: 面板 · z1
+      - generic [ref=e49]:
+        - button "上移一层" [disabled] [ref=e50]
+        - button "下移一层" [ref=e51] [cursor=pointer]
+      - generic [ref=e52]:
+        - paragraph [ref=e53]: 元素库
+        - paragraph [ref=e54]: 可以直接用预设元素替换当前图片节点；如果当前没有选中图片，也可以插入一个新的图片节点。
+        - generic [ref=e55]:
+          - article [ref=e56]:
+            - img "肾脏" [ref=e57]
+            - generic [ref=e58]:
+              - strong [ref=e59]: 肾脏
+              - generic [ref=e60]: /library/kidney-clean.svg
+            - button "替换当前图片" [active] [ref=e148] [cursor=pointer]
+          - article [ref=e62]:
+            - img "线粒体" [ref=e63]
+            - generic [ref=e64]:
+              - strong [ref=e65]: 线粒体
+              - generic [ref=e66]: /library/mitochondria.svg
+            - button "替换当前图片" [ref=e149] [cursor=pointer]
+          - article [ref=e68]:
+            - img "细菌" [ref=e69]
+            - generic [ref=e70]:
+              - strong [ref=e71]: 细菌
+              - generic [ref=e72]: /library/bacteria.svg
+            - button "替换当前图片" [ref=e150] [cursor=pointer]
+          - article [ref=e74]:
+            - img "免疫细胞" [ref=e75]
+            - generic [ref=e76]:
+              - strong [ref=e77]: 免疫细胞
+              - generic [ref=e78]: /library/immune-cell.svg
+            - button "替换当前图片" [ref=e151] [cursor=pointer]
+          - article [ref=e80]:
+            - img "炎症反应" [ref=e81]
+            - generic [ref=e82]:
+              - strong [ref=e83]: 炎症反应
+              - generic [ref=e84]: /library/inflammation.svg
+            - button "替换当前图片" [ref=e152] [cursor=pointer]
+          - article [ref=e86]:
+            - img "保护屏障" [ref=e87]
+            - generic [ref=e88]:
+              - strong [ref=e89]: 保护屏障
+              - generic [ref=e90]: /library/protective-shield.svg
+            - button "替换当前图片" [ref=e153] [cursor=pointer]
+    - generic [ref=e93]:
+      - generic [ref=e94]:
+        - paragraph [ref=e95]: 画布
+        - heading "图片节点可直接拖角缩放，拖动可改位置，右侧属性面板负责精确数值。" [level=2] [ref=e96]
+      - generic [ref=e97]:
+        - generic [ref=e98]: "当前选中: 肾脏"
+        - group "缩放" [ref=e99]:
+          - button "缩小" [ref=e100] [cursor=pointer]
+          - button "适配" [ref=e101] [cursor=pointer]
+          - button "放大" [ref=e102] [cursor=pointer]
+          - generic [ref=e103]: 44%
+    - complementary [ref=e109]:
+      - generic [ref=e111]:
+        - paragraph [ref=e112]: 属性
+        - heading "肾脏" [level=2] [ref=e154]
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]: 类型
+          - textbox "类型" [ref=e117]: 图片
+        - generic [ref=e118]:
+          - generic [ref=e119]: X 坐标
+          - spinbutton "X 坐标" [ref=e120]: "545"
+        - generic [ref=e121]:
+          - generic [ref=e122]: Y 坐标
+          - spinbutton "Y 坐标" [ref=e123]: "360"
+        - generic [ref=e124]:
+          - generic [ref=e125]: 宽度
+          - spinbutton "宽度" [ref=e126]: "180"
+        - generic [ref=e127]:
+          - generic [ref=e128]: 高度
+          - spinbutton "高度" [ref=e129]: "132"
+        - generic [ref=e130]:
+          - generic [ref=e131]: 层级
+          - spinbutton "层级" [ref=e132]: "30"
+      - generic [ref=e155]:
+        - paragraph [ref=e156]: 当前资源
+        - generic [ref=e157]:
+          - img "当前资源" [ref=e158]
+          - generic [ref=e159]:
+            - strong [ref=e160]: 肾脏
+            - generic [ref=e161]: /library/kidney-clean.svg
+        - generic [ref=e162]:
+          - generic [ref=e163]: 资源地址
+          - textbox "资源地址" [ref=e164]: /library/kidney-clean.svg
+        - generic [ref=e165]:
+          - generic [ref=e166]: 生成提示词
+          - textbox "生成提示词" [ref=e167]: simplify this scientific icon while keeping the composition readable
+        - generic [ref=e168]:
+          - generic [ref=e169]: 反馈
+          - textbox "反馈" [ref=e170]: Prefer a cleaner silhouette and lower detail.
+        - button "重新生成图片节点" [ref=e171] [cursor=pointer]
+        - generic [ref=e172]:
+          - strong [ref=e174]: 生成状态
+          - paragraph [ref=e175]: 还没有发起生成请求。
+          - strong [ref=e177]: 生成结果
+          - paragraph [ref=e178]: 暂时还没有生成结果。

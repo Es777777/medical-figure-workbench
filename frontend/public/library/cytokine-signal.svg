@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" width="320" height="220">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8f4f6" />
+      <stop offset="100%" stop-color="#d4ecee" />
+    </linearGradient>
+    <linearGradient id="cyto" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3f9ca6" />
+      <stop offset="100%" stop-color="#207078" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="220" rx="24" fill="url(#bg)" />
+  <g transform="translate(160, 110)">
+    <circle cx="-25" cy="0" r="18" fill="url(#cyto)" fill-opacity="0.2" stroke="#205a60" stroke-width="3" />
+    <circle cx="25" cy="0" r="18" fill="url(#cyto)" fill-opacity="0.2" stroke="#205a60" stroke-width="3" />
+    <path d="M-7,0 L7,0" stroke="#205a60" stroke-width="4" stroke-linecap="round" />
+    <path d="M-25,-18 L-25,-30" stroke="#205a60" stroke-width="3" stroke-linecap="round" />
+    <path d="M25,-18 L25,-30" stroke="#205a60" stroke-width="3" stroke-linecap="round" />
+    <path d="M-25,18 L-25,30" stroke="#205a60" stroke-width="3" stroke-linecap="round" />
+    <path d="M25,18 L25,30" stroke="#205a60" stroke-width="3" stroke-linecap="round" />
+    <circle cx="-25" cy="0" r="6" fill="#205a60" fill-opacity="0.4" />
+    <circle cx="25" cy="0" r="6" fill="#205a60" fill-opacity="0.4" />
+  </g>
+</svg>

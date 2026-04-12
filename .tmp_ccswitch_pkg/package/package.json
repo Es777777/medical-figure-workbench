@@ -1,0 +1,55 @@
+{
+    "name": "@bainiu/ccswitch",
+    "version": "0.1.8",
+    "publishConfig": {
+        "access": "public"
+    },
+    "description": "项目级模型切换 & MCP 启用工具（Claude Code）",
+    "main": "index.js",
+    "bin": {
+        "ccswitch": "bin/ccswitch.js"
+    },
+    "files": [
+        "bin/",
+        "src/",
+        "template/",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "test": "jest",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --coverage",
+        "lint": "eslint src/",
+        "lint:fix": "eslint src/ --fix",
+        "version": "npm run test && git add -A src",
+        "postversion": "git push && git push --tags"
+    },
+    "keywords": [
+        "claude",
+        "model-switcher",
+        "mcp",
+        "cli",
+        "command-line"
+    ],
+    "author": {
+        "name": "bainiu",
+        "email": "bainiu@example.com"
+    },
+    "license": "MIT",
+    "engines": {
+        "node": ">=18"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://git.code.tencent.com/bainiu/open-source/ccswitch.git"
+    },
+    "bugs": {
+        "url": "https://git.code.tencent.com/bainiu/open-source/ccswitch/issues"
+    },
+    "homepage": "https://git.code.tencent.com/bainiu/open-source/ccswitch#readme",
+    "devDependencies": {
+        "jest": "^29.0.0",
+        "eslint": "^8.0.0"
+    }
+}

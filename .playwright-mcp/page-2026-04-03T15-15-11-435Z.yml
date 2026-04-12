@@ -1,0 +1,161 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - paragraph [ref=e6]: Scientific figure composer
+      - heading "Minimal Fabric editor" [level=1] [ref=e7]
+      - paragraph [ref=e8]: Loads the existing example SceneGraph, keeps the current backend route names, and focuses on the first useful editing loop.
+    - generic [ref=e9]:
+      - group "Language" [ref=e10]:
+        - button "EN" [ref=e11] [cursor=pointer]
+        - button "中文" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - term [ref=e15]: Fixture
+          - definition [ref=e16]: examples/minimal-compose-request.json
+        - generic [ref=e17]:
+          - term [ref=e18]: Canvas
+          - definition [ref=e19]: 1270 × 852
+        - generic [ref=e20]:
+          - term [ref=e21]: Source
+          - definition [ref=e22]: /uploads/normalized/Graphical Abstract Image.png
+        - generic [ref=e23]:
+          - term [ref=e24]: Regenerate
+          - definition [ref=e25]: /regenerate-node
+  - main [ref=e26]:
+    - complementary [ref=e27]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: Layers
+        - heading "4 nodes" [level=2] [ref=e31]
+      - list [ref=e32]:
+        - button "AKI Label Text · z20" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]:
+            - strong [ref=e35]: AKI Label
+            - generic [ref=e36]: Text · z20
+        - button "Outcome Arrow Arrow · z15" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]:
+            - strong [ref=e39]: Outcome Arrow
+            - generic [ref=e40]: Arrow · z15
+        - button "Kidney Icon Image · z10" [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]:
+            - strong [ref=e43]: Kidney Icon
+            - generic [ref=e44]: Image · z10
+        - button "Main Panel Panel · z1" [ref=e45] [cursor=pointer]:
+          - generic [ref=e46]:
+            - strong [ref=e47]: Main Panel
+            - generic [ref=e48]: Panel · z1
+      - generic [ref=e49]:
+        - button "Bring forward" [ref=e50] [cursor=pointer]
+        - button "Send backward" [ref=e51] [cursor=pointer]
+      - generic [ref=e52]:
+        - paragraph [ref=e53]: Element library
+        - paragraph [ref=e54]: Use a preset to replace the selected image node, or insert a new image when no image node is selected.
+        - generic [ref=e55]:
+          - article [ref=e56]:
+            - img "Kidney" [ref=e57]
+            - generic [ref=e58]:
+              - strong [ref=e59]: Kidney
+              - generic [ref=e60]: preset://kidney-clean
+            - button "Replace selected image" [ref=e143] [cursor=pointer]
+          - article [ref=e62]:
+            - img "Mitochondria" [ref=e63]
+            - generic [ref=e64]:
+              - strong [ref=e65]: Mitochondria
+              - generic [ref=e66]: preset://mitochondria
+            - button "Replace selected image" [ref=e144] [cursor=pointer]
+          - article [ref=e68]:
+            - img "Bacteria" [ref=e69]
+            - generic [ref=e70]:
+              - strong [ref=e71]: Bacteria
+              - generic [ref=e72]: preset://bacteria
+            - button "Replace selected image" [ref=e145] [cursor=pointer]
+          - article [ref=e74]:
+            - img "Immune Cell" [ref=e75]
+            - generic [ref=e76]:
+              - strong [ref=e77]: Immune Cell
+              - generic [ref=e78]: preset://immune-cell
+            - button "Replace selected image" [ref=e146] [cursor=pointer]
+          - article [ref=e80]:
+            - img "Inflammation" [ref=e81]
+            - generic [ref=e82]:
+              - strong [ref=e83]: Inflammation
+              - generic [ref=e84]: preset://inflammation
+            - button "Replace selected image" [ref=e147] [cursor=pointer]
+          - article [ref=e86]:
+            - img "Protection" [ref=e87]
+            - generic [ref=e88]:
+              - strong [ref=e89]: Protection
+              - generic [ref=e90]: preset://protective-shield
+            - button "Replace selected image" [ref=e148] [cursor=pointer]
+    - generic [ref=e93]:
+      - generic [ref=e94]:
+        - paragraph [ref=e95]: Canvas
+        - heading "Resize image nodes from the corners, drag to reposition, and use the properties panel for exact values." [level=2] [ref=e96]
+      - generic [ref=e97]:
+        - generic [ref=e98]: "Selected: Kidney Icon"
+        - group "Zoom" [ref=e99]:
+          - button "Zoom out" [ref=e100] [cursor=pointer]
+          - button "Reset" [ref=e101] [cursor=pointer]
+          - button "Zoom in" [ref=e102] [cursor=pointer]
+          - generic [ref=e103]: 100%
+    - complementary [ref=e109]:
+      - generic [ref=e111]:
+        - paragraph [ref=e112]: Properties
+        - heading "Kidney Icon" [level=2] [ref=e149]
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - generic [ref=e116]: Type
+          - textbox "Type" [ref=e117]: Image
+        - generic [ref=e118]:
+          - generic [ref=e119]: X
+          - spinbutton "X" [ref=e120]: "940"
+        - generic [ref=e121]:
+          - generic [ref=e122]: "Y"
+          - spinbutton "Y" [ref=e123]: "240"
+        - generic [ref=e124]:
+          - generic [ref=e125]: Width
+          - spinbutton "Width" [ref=e126]: "120"
+        - generic [ref=e127]:
+          - generic [ref=e128]: Height
+          - spinbutton "Height" [ref=e129]: "120"
+        - generic [ref=e130]:
+          - generic [ref=e131]: Z-index
+          - spinbutton "Z-index" [ref=e132]: "10"
+      - generic [ref=e150]:
+        - paragraph [ref=e151]: Current asset
+        - generic [ref=e152]:
+          - img "Current asset" [ref=e153]
+          - generic [ref=e154]:
+            - strong [ref=e155]: Kidney Icon
+            - generic [ref=e156]: /assets/generated/kidney.png
+        - generic [ref=e157]:
+          - generic [ref=e158]: Asset URI
+          - textbox "Asset URI" [ref=e159]: /assets/generated/kidney.png
+        - generic [ref=e160]:
+          - generic [ref=e161]: Prompt
+          - textbox "Prompt" [ref=e162]: simplify this scientific icon while keeping the composition readable
+        - generic [ref=e163]:
+          - generic [ref=e164]: Feedback
+          - textbox "Feedback" [ref=e165]: Prefer a cleaner silhouette and lower detail.
+        - button "Regenerate image node" [ref=e166] [cursor=pointer]
+        - generic [ref=e167]:
+          - generic [ref=e168]:
+            - strong [ref=e169]: Regenerate status
+            - generic [ref=e174]: mock
+          - paragraph [ref=e170]: Backend unavailable, showing mock variants instead.
+          - paragraph [ref=e175]:
+            - strong [ref=e176]: "Technical detail:"
+            - text: No API base configured for regenerate-node, showing mock variants instead.
+          - strong [ref=e172]: Generated variants
+          - generic [ref=e177]:
+            - article [ref=e178]:
+              - img "mock_img_kidney_001_001" [ref=e179]
+              - generic [ref=e180]:
+                - strong [ref=e181]: mock_img_kidney_001_001
+                - generic [ref=e182]: /generated/img_kidney_001/mock-variant-1.png
+              - button "Apply variant" [ref=e183] [cursor=pointer]
+            - article [ref=e184]:
+              - img "mock_img_kidney_001_002" [ref=e185]
+              - generic [ref=e186]:
+                - strong [ref=e187]: mock_img_kidney_001_002
+                - generic [ref=e188]: /generated/img_kidney_001/mock-variant-2.png
+              - button "Apply variant" [ref=e189] [cursor=pointer]

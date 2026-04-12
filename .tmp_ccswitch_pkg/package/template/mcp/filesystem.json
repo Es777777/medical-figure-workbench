@@ -1,0 +1,21 @@
+{
+    "_meta": {
+        "description": "允许 AI 读取/写入本地文件",
+        "prompts": [
+            {
+                "type": "input",
+                "message": "请输入允许 AI 访问的目录路径\n\n📁 推荐选项 (输入对应的编号或直接输入路径):\n  • .              (当前项目目录 - 推荐)\n  • ./docs         (项目文档目录)\n  • ./src          (源代码目录)\n  • ~/Downloads    (下载目录)\n  • ~/Desktop      (桌面目录)\n  • /tmp           (临时目录)\n\n💡 提示:\n  • 使用相对路径 (./) 便于项目共享和协作\n  • 使用绝对路径 (~ 或 /) 访问系统目录\n  • AI 将获得该目录及其所有子目录的完全访问权限\n  • 请确保选择的目录不包含敏感信息\n\n请输入路径:",
+                "default": ".",
+                "target": "args[1]",
+                "placeholder": "<PATH>",
+                "validate": "path"
+            }
+        ]
+    },
+    "mcpServers": {
+        "filesystem": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-filesystem", "<PATH>"]
+        }
+    }
+}

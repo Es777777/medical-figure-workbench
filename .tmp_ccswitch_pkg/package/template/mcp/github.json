@@ -1,0 +1,23 @@
+{
+    "_meta": {
+        "description": "GitHub 仓库管理 (Issues, PRs, etc.)",
+        "prompts": [
+            {
+                "type": "password",
+                "message": "请输入 GitHub Personal Access Token (PAT)",
+                "target": "env.GITHUB_PERSONAL_ACCESS_TOKEN",
+                "placeholder": "<GITHUB_TOKEN>",
+                "validate": "github_token"
+            }
+        ]
+    },
+    "mcpServers": {
+        "github": {
+            "command": "npx",
+            "args": ["-y", "@modelcontextprotocol/server-github"],
+            "env": {
+                "GITHUB_PERSONAL_ACCESS_TOKEN": "<GITHUB_TOKEN>"
+            }
+        }
+    }
+}

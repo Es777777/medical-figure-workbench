@@ -1,0 +1,198 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - paragraph [ref=e6]: 科研机制图拼装器
+      - heading "最小 Fabric 编辑器" [level=1] [ref=e7]
+      - paragraph [ref=e8]: 加载现有 SceneGraph 示例，沿用当前后端路由，并把重点放在第一条真正有用的编辑闭环上。
+    - generic [ref=e9]:
+      - group "语言切换" [ref=e10]:
+        - button "EN" [ref=e11] [cursor=pointer]
+        - button "中文" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - term [ref=e15]: 示例数据
+          - definition [ref=e16]: examples/minimal-compose-request.json
+        - generic [ref=e17]:
+          - term [ref=e18]: 画布
+          - definition [ref=e19]: 1270 × 852
+        - generic [ref=e20]:
+          - term [ref=e21]: 来源
+          - definition [ref=e22]: /uploads/normalized/Graphical Abstract Image.png
+        - generic [ref=e23]:
+          - term [ref=e24]: 生成路由
+          - definition [ref=e25]: /regenerate-node
+  - main [ref=e26]:
+    - complementary [ref=e27]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: 图层
+        - heading "4 个节点" [level=2] [ref=e31]
+      - list:
+        - button "AKI Label 文字 · z20" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33]:
+            - strong [ref=e34]: AKI Label
+            - generic [ref=e35]: 文字 · z20
+        - button "Outcome Arrow 箭头 · z15" [ref=e36] [cursor=pointer]:
+          - generic [ref=e37]:
+            - strong [ref=e38]: Outcome Arrow
+            - generic [ref=e39]: 箭头 · z15
+        - button "Kidney Icon 图片 · z10" [ref=e40] [cursor=pointer]:
+          - generic [ref=e41]:
+            - strong [ref=e42]: Kidney Icon
+            - generic [ref=e43]: 图片 · z10
+        - button "Main Panel 面板 · z1" [ref=e44] [cursor=pointer]:
+          - generic [ref=e45]:
+            - strong [ref=e46]: Main Panel
+            - generic [ref=e47]: 面板 · z1
+      - generic [ref=e48]:
+        - button "上移一层" [disabled] [ref=e49]
+        - button "下移一层" [ref=e50] [cursor=pointer]
+      - generic [ref=e51]:
+        - paragraph [ref=e52]: Prompt 规划
+        - paragraph [ref=e53]: 用自然语言描述整张图，规划器会自动抽取实体、关系和建议元素，而不是要求你逐步拆成一行一行。
+        - generic [ref=e54]:
+          - text: 生成提示词
+          - textbox "生成提示词" [ref=e55]: Create a sepsis mechanism figure where infection triggers inflammation, then leads to kidney injury and a repair branch.
+        - generic [ref=e56]:
+          - button "分析 Prompt" [ref=e57] [cursor=pointer]
+          - button "应用结构" [disabled] [ref=e58] [cursor=pointer]
+        - generic [ref=e59]:
+          - strong [ref=e61]: 分析状态
+          - paragraph [ref=e62]: 还没有结构化 Prompt 分析结果。
+      - generic [ref=e63]:
+        - paragraph [ref=e64]: 重构单元
+        - generic [ref=e65]:
+          - text: 问题说明
+          - textbox "问题说明" [ref=e66]: The current generated figure is missing one important inhibitory relation and the icon choices feel weak.
+        - generic [ref=e67]:
+          - button "重构当前图" [ref=e68] [cursor=pointer]
+          - button "应用重构" [disabled] [ref=e69] [cursor=pointer]
+        - generic [ref=e70]:
+          - strong [ref=e72]: 重构状态
+          - paragraph [ref=e73]: 还没有重构建议。
+      - generic [ref=e74]:
+        - paragraph [ref=e75]: 流程布局
+        - paragraph [ref=e76]: 按换行、逗号或箭头输入流程步骤，编辑器会自动切分成占位槽位并连上箭头。
+        - generic [ref=e77]:
+          - text: 流程步骤
+          - textbox "流程步骤" [ref=e78]: 感染 炎症 器官损伤 修复
+        - button "生成流程布局" [ref=e79] [cursor=pointer]
+      - generic [ref=e80]:
+        - paragraph [ref=e81]: 元素库
+        - paragraph [ref=e82]: 可以直接用预设元素替换当前图片节点；如果当前没有选中图片，也可以插入一个新的图片节点。
+        - generic:
+          - article [ref=e83]:
+            - img "肾脏" [ref=e84]
+            - generic [ref=e85]:
+              - strong [ref=e86]: 肾脏
+              - generic [ref=e87]: /library/kidney-clean.svg
+            - button "插入到画布" [ref=e88] [cursor=pointer]
+          - article [ref=e89]:
+            - img "线粒体" [ref=e90]
+            - generic [ref=e91]:
+              - strong [ref=e92]: 线粒体
+              - generic [ref=e93]: /library/mitochondria.svg
+            - button "插入到画布" [ref=e94] [cursor=pointer]
+          - article [ref=e95]:
+            - img "细菌" [ref=e96]
+            - generic [ref=e97]:
+              - strong [ref=e98]: 细菌
+              - generic [ref=e99]: /library/bacteria.svg
+            - button "插入到画布" [ref=e100] [cursor=pointer]
+          - article [ref=e101]:
+            - img "免疫细胞" [ref=e102]
+            - generic [ref=e103]:
+              - strong [ref=e104]: 免疫细胞
+              - generic [ref=e105]: /library/immune-cell.svg
+            - button "插入到画布" [ref=e106] [cursor=pointer]
+          - article [ref=e107]:
+            - img "炎症反应" [ref=e108]
+            - generic [ref=e109]:
+              - strong [ref=e110]: 炎症反应
+              - generic [ref=e111]: /library/inflammation.svg
+            - button "插入到画布" [ref=e112] [cursor=pointer]
+          - article [ref=e113]:
+            - img "保护屏障" [ref=e114]
+            - generic [ref=e115]:
+              - strong [ref=e116]: 保护屏障
+              - generic [ref=e117]: /library/protective-shield.svg
+            - button "插入到画布" [ref=e118] [cursor=pointer]
+          - article [ref=e119]:
+            - img "膜结构" [ref=e120]
+            - generic [ref=e121]:
+              - strong [ref=e122]: 膜结构
+              - generic [ref=e123]: data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%22200%22%20viewBox%3D%220%200%20320%20200%22%3E%0A%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20x2%3D%221%22%20y1%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%237f8bb0%22%20stop-opacity%3D%220.2%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%234c5772%22%20stop-opacity%3D%220.34%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22320%22%20height%3D%22200%22%20rx%3D%2228%22%20fill%3D%22%23fbfaf7%22%20%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%2218%22%20y%3D%2218%22%20width%3D%22284%22%20height%3D%22164%22%20rx%3D%2224%22%20fill%3D%22url(%23g)%22%20stroke%3D%22%237f8bb0%22%20stroke-width%3D%222%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M64%20120c0-32%2026-58%2058-58%2018%200%2036%208%2047%2022%2011-14%2029-22%2047-22%2032%200%2058%2026%2058%2058%200%2018-7%2034-19%2045H83c-12-11-19-27-19-45Z%22%20fill%3D%22%237f8bb0%22%20fill-opacity%3D%220.22%22%20stroke%3D%22%234c5772%22%20stroke-width%3D%224%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M98%20118h124%22%20stroke%3D%22%234c5772%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M126%2093c10%2010%2020%2015%2034%2015%2014%200%2024-5%2034-15%22%20fill%3D%22none%22%20stroke%3D%22%234c5772%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2242%22%20font-family%3D%22Trebuchet%20MS%2C%20sans-serif%22%20font-size%3D%2217%22%20fill%3D%22%231f2a35%22%3E%E8%86%9C%E7%BB%93%E6%9E%84%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E%0A%20%20
+            - button "插入到画布" [ref=e124] [cursor=pointer]
+          - article [ref=e125]:
+            - img "细胞核" [ref=e126]
+            - generic [ref=e127]:
+              - strong [ref=e128]: 细胞核
+              - generic [ref=e129]: data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%22200%22%20viewBox%3D%220%200%20320%20200%22%3E%0A%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20x2%3D%221%22%20y1%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%238f72bf%22%20stop-opacity%3D%220.2%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%235c428b%22%20stop-opacity%3D%220.34%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22320%22%20height%3D%22200%22%20rx%3D%2228%22%20fill%3D%22%23fbfaf7%22%20%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%2218%22%20y%3D%2218%22%20width%3D%22284%22%20height%3D%22164%22%20rx%3D%2224%22%20fill%3D%22url(%23g)%22%20stroke%3D%22%238f72bf%22%20stroke-width%3D%222%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M64%20120c0-32%2026-58%2058-58%2018%200%2036%208%2047%2022%2011-14%2029-22%2047-22%2032%200%2058%2026%2058%2058%200%2018-7%2034-19%2045H83c-12-11-19-27-19-45Z%22%20fill%3D%22%238f72bf%22%20fill-opacity%3D%220.22%22%20stroke%3D%22%235c428b%22%20stroke-width%3D%224%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M98%20118h124%22%20stroke%3D%22%235c428b%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M126%2093c10%2010%2020%2015%2034%2015%2014%200%2024-5%2034-15%22%20fill%3D%22none%22%20stroke%3D%22%235c428b%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2242%22%20font-family%3D%22Trebuchet%20MS%2C%20sans-serif%22%20font-size%3D%2217%22%20fill%3D%22%231f2a35%22%3E%E7%BB%86%E8%83%9E%E6%A0%B8%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E%0A%20%20
+            - button "插入到画布" [ref=e130] [cursor=pointer]
+          - article [ref=e131]:
+            - img "氧化应激" [ref=e132]
+            - generic [ref=e133]:
+              - strong [ref=e134]: 氧化应激
+              - generic [ref=e135]: data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%22200%22%20viewBox%3D%220%200%20320%20200%22%3E%0A%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20x2%3D%221%22%20y1%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23d18f2a%22%20stop-opacity%3D%220.2%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%238a5816%22%20stop-opacity%3D%220.34%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22320%22%20height%3D%22200%22%20rx%3D%2228%22%20fill%3D%22%23fbfaf7%22%20%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%2218%22%20y%3D%2218%22%20width%3D%22284%22%20height%3D%22164%22%20rx%3D%2224%22%20fill%3D%22url(%23g)%22%20stroke%3D%22%23d18f2a%22%20stroke-width%3D%222%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M64%20120c0-32%2026-58%2058-58%2018%200%2036%208%2047%2022%2011-14%2029-22%2047-22%2032%200%2058%2026%2058%2058%200%2018-7%2034-19%2045H83c-12-11-19-27-19-45Z%22%20fill%3D%22%23d18f2a%22%20fill-opacity%3D%220.22%22%20stroke%3D%22%238a5816%22%20stroke-width%3D%224%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M98%20118h124%22%20stroke%3D%22%238a5816%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M126%2093c10%2010%2020%2015%2034%2015%2014%200%2024-5%2034-15%22%20fill%3D%22none%22%20stroke%3D%22%238a5816%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2242%22%20font-family%3D%22Trebuchet%20MS%2C%20sans-serif%22%20font-size%3D%2217%22%20fill%3D%22%231f2a35%22%3E%E6%B0%A7%E5%8C%96%E5%BA%94%E6%BF%80%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E%0A%20%20
+            - button "插入到画布" [ref=e136] [cursor=pointer]
+          - article [ref=e137]:
+            - img "细胞凋亡" [ref=e138]
+            - generic [ref=e139]:
+              - strong [ref=e140]: 细胞凋亡
+              - generic [ref=e141]: data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%22200%22%20viewBox%3D%220%200%20320%20200%22%3E%0A%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20x2%3D%221%22%20y1%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23b85d5d%22%20stop-opacity%3D%220.2%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%237a3333%22%20stop-opacity%3D%220.34%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22320%22%20height%3D%22200%22%20rx%3D%2228%22%20fill%3D%22%23fbfaf7%22%20%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%2218%22%20y%3D%2218%22%20width%3D%22284%22%20height%3D%22164%22%20rx%3D%2224%22%20fill%3D%22url(%23g)%22%20stroke%3D%22%23b85d5d%22%20stroke-width%3D%222%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M64%20120c0-32%2026-58%2058-58%2018%200%2036%208%2047%2022%2011-14%2029-22%2047-22%2032%200%2058%2026%2058%2058%200%2018-7%2034-19%2045H83c-12-11-19-27-19-45Z%22%20fill%3D%22%23b85d5d%22%20fill-opacity%3D%220.22%22%20stroke%3D%22%237a3333%22%20stroke-width%3D%224%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M98%20118h124%22%20stroke%3D%22%237a3333%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M126%2093c10%2010%2020%2015%2034%2015%2014%200%2024-5%2034-15%22%20fill%3D%22none%22%20stroke%3D%22%237a3333%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2242%22%20font-family%3D%22Trebuchet%20MS%2C%20sans-serif%22%20font-size%3D%2217%22%20fill%3D%22%231f2a35%22%3E%E7%BB%86%E8%83%9E%E5%87%8B%E4%BA%A1%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E%0A%20%20
+            - button "插入到画布" [ref=e142] [cursor=pointer]
+          - article [ref=e143]:
+            - img "细胞因子信号" [ref=e144]
+            - generic [ref=e145]:
+              - strong [ref=e146]: 细胞因子信号
+              - generic [ref=e147]: data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%22200%22%20viewBox%3D%220%200%20320%20200%22%3E%0A%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20x2%3D%221%22%20y1%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%233f9ca6%22%20stop-opacity%3D%220.2%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23205a60%22%20stop-opacity%3D%220.34%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22320%22%20height%3D%22200%22%20rx%3D%2228%22%20fill%3D%22%23fbfaf7%22%20%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%2218%22%20y%3D%2218%22%20width%3D%22284%22%20height%3D%22164%22%20rx%3D%2224%22%20fill%3D%22url(%23g)%22%20stroke%3D%22%233f9ca6%22%20stroke-width%3D%222%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M64%20120c0-32%2026-58%2058-58%2018%200%2036%208%2047%2022%2011-14%2029-22%2047-22%2032%200%2058%2026%2058%2058%200%2018-7%2034-19%2045H83c-12-11-19-27-19-45Z%22%20fill%3D%22%233f9ca6%22%20fill-opacity%3D%220.22%22%20stroke%3D%22%23205a60%22%20stroke-width%3D%224%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M98%20118h124%22%20stroke%3D%22%23205a60%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M126%2093c10%2010%2020%2015%2034%2015%2014%200%2024-5%2034-15%22%20fill%3D%22none%22%20stroke%3D%22%23205a60%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2242%22%20font-family%3D%22Trebuchet%20MS%2C%20sans-serif%22%20font-size%3D%2217%22%20fill%3D%22%231f2a35%22%3E%E7%BB%86%E8%83%9E%E5%9B%A0%E5%AD%90%E4%BF%A1%E5%8F%B7%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E%0A%20%20
+            - button "插入到画布" [ref=e148] [cursor=pointer]
+          - article [ref=e149]:
+            - img "结果面板" [ref=e150]
+            - generic [ref=e151]:
+              - strong [ref=e152]: 结果面板
+              - generic [ref=e153]: data:image/svg+xml;charset=utf-8,%0A%20%20%20%20%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22320%22%20height%3D%22200%22%20viewBox%3D%220%200%20320%20200%22%3E%0A%20%20%20%20%20%20%3Cdefs%3E%0A%20%20%20%20%20%20%20%20%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20x2%3D%221%22%20y1%3D%220%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%235e8c79%22%20stop-opacity%3D%220.2%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23345646%22%20stop-opacity%3D%220.34%22%20%2F%3E%0A%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%20%20%20%20%3C%2Fdefs%3E%0A%20%20%20%20%20%20%3Crect%20width%3D%22320%22%20height%3D%22200%22%20rx%3D%2228%22%20fill%3D%22%23fbfaf7%22%20%2F%3E%0A%20%20%20%20%20%20%3Crect%20x%3D%2218%22%20y%3D%2218%22%20width%3D%22284%22%20height%3D%22164%22%20rx%3D%2224%22%20fill%3D%22url(%23g)%22%20stroke%3D%22%235e8c79%22%20stroke-width%3D%222%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M64%20120c0-32%2026-58%2058-58%2018%200%2036%208%2047%2022%2011-14%2029-22%2047-22%2032%200%2058%2026%2058%2058%200%2018-7%2034-19%2045H83c-12-11-19-27-19-45Z%22%20fill%3D%22%235e8c79%22%20fill-opacity%3D%220.22%22%20stroke%3D%22%23345646%22%20stroke-width%3D%224%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M98%20118h124%22%20stroke%3D%22%23345646%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Cpath%20d%3D%22M126%2093c10%2010%2020%2015%2034%2015%2014%200%2024-5%2034-15%22%20fill%3D%22none%22%20stroke%3D%22%23345646%22%20stroke-width%3D%2210%22%20stroke-linecap%3D%22round%22%20%2F%3E%0A%20%20%20%20%20%20%3Ctext%20x%3D%2224%22%20y%3D%2242%22%20font-family%3D%22Trebuchet%20MS%2C%20sans-serif%22%20font-size%3D%2217%22%20fill%3D%22%231f2a35%22%3E%E7%BB%93%E6%9E%9C%E9%9D%A2%E6%9D%BF%3C%2Ftext%3E%0A%20%20%20%20%3C%2Fsvg%3E%0A%20%20
+            - button "插入到画布" [ref=e154] [cursor=pointer]
+    - generic [ref=e156]:
+      - generic [ref=e157]:
+        - paragraph [ref=e158]: 画布
+        - heading "图片节点可直接拖角缩放，拖动可改位置，右侧属性面板负责精确数值。" [level=2] [ref=e159]
+      - generic [ref=e160]:
+        - generic [ref=e161]: "当前选中: AKI Label"
+        - group "缩放" [ref=e162]:
+          - button "缩小" [ref=e163] [cursor=pointer]
+          - button "适配" [ref=e164] [cursor=pointer]
+          - button "放大" [ref=e165] [cursor=pointer]
+          - generic [ref=e166]: 35%
+    - complementary [ref=e172]:
+      - generic [ref=e174]:
+        - paragraph [ref=e175]: 属性
+        - heading "AKI Label" [level=2] [ref=e176]
+      - generic [ref=e177]:
+        - generic [ref=e178]:
+          - generic [ref=e179]: 类型
+          - textbox "类型" [ref=e180]: 文字
+        - generic [ref=e181]:
+          - generic [ref=e182]: X 坐标
+          - spinbutton "X 坐标" [ref=e183]: "930"
+        - generic [ref=e184]:
+          - generic [ref=e185]: Y 坐标
+          - spinbutton "Y 坐标" [ref=e186]: "370"
+        - generic [ref=e187]:
+          - generic [ref=e188]: 宽度
+          - spinbutton "宽度" [ref=e189]: "140"
+        - generic [ref=e190]:
+          - generic [ref=e191]: 高度
+          - spinbutton "高度" [disabled] [ref=e192]: "30"
+        - generic [ref=e193]:
+          - generic [ref=e194]: 层级
+          - spinbutton "层级" [ref=e195]: "20"
+      - generic [ref=e196]:
+        - generic [ref=e197]:
+          - generic [ref=e198]: 文字
+          - textbox "文字" [ref=e199]: AKI
+        - generic [ref=e200]:
+          - generic [ref=e201]: 字号
+          - spinbutton "字号" [ref=e202]: "24"
+        - generic [ref=e203]:
+          - generic [ref=e204]: 颜色
+          - textbox "颜色" [ref=e205]: "#1f2937"

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" width="320" height="220">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7e4e8" />
+      <stop offset="100%" stop-color="#fceef1" />
+    </linearGradient>
+    <linearGradient id="kidney" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c55d6d" />
+      <stop offset="100%" stop-color="#a34252" />
+    </linearGradient>
+  </defs>
+  <rect width="320" height="220" rx="24" fill="url(#bg)" />
+  <g transform="translate(160, 110)">
+    <path d="M-45,-35 C-75,-35 -95,-10 -95,15 C-95,45 -65,65 -35,65 C-15,65 0,50 0,30 C0,10 -15,-5 -35,-5 C-50,-5 -60,5 -60,20 C-60,35 -45,45 -35,45 C-20,45 -10,35 -10,25 C-10,15 -20,5 -35,5 C-45,5 -50,10 -50,20" fill="url(#kidney)" stroke="#873443" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M-10,0 C10,-10 20,0 20,20 C20,40 0,50 -15,45" fill="none" stroke="#873443" stroke-width="3" stroke-linecap="round" />
+    <path d="M-10,15 C5,10 10,20 10,30" fill="none" stroke="#873443" stroke-width="3" stroke-linecap="round" />
+  </g>
+</svg>

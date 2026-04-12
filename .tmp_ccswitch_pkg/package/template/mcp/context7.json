@@ -1,0 +1,19 @@
+{
+    "_meta": {
+        "description": "Context7 - 实时获取最新的库文档、API 参考和代码示例",
+        "prompts": [
+            {
+                "type": "confirm",
+                "message": "Context7 可以帮助获取最新的技术文档和代码示例\n\n功能特性:\n  • 获取最新的库文档和 API 参考\n  • 实时搜索代码示例和最佳实践\n  • 支持多种编程语言和框架\n  • 无需 API 密钥，开箱即用\n\n是否添加 Context7 MCP 服务器？",
+                "default": true
+            }
+        ]
+    },
+    "mcpServers": {
+        "context7": {
+            "command": "npx",
+            "args": ["-y", "@upstash/context7-mcp"],
+            "env": {}
+        }
+    }
+}

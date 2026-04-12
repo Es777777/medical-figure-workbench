@@ -1,0 +1,98 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - paragraph [ref=e6]: 科研机制图拼装器
+      - heading "最小 Fabric 编辑器" [level=1] [ref=e7]
+      - paragraph [ref=e8]: 加载现有 SceneGraph 示例，沿用当前后端路由，并把重点放在第一条真正有用的编辑闭环上。
+    - generic [ref=e9]:
+      - group "语言切换" [ref=e10]:
+        - button "EN" [ref=e11] [cursor=pointer]
+        - button "中文" [ref=e12] [cursor=pointer]
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - term [ref=e15]: 示例数据
+          - definition [ref=e16]: examples/minimal-compose-request.json
+        - generic [ref=e17]:
+          - term [ref=e18]: 画布
+          - definition [ref=e19]: 1270 × 852
+        - generic [ref=e20]:
+          - term [ref=e21]: 来源
+          - definition [ref=e22]: /uploads/normalized/Graphical Abstract Image.png
+        - generic [ref=e23]:
+          - term [ref=e24]: 生成路由
+          - definition [ref=e25]: /regenerate-node
+  - main [ref=e26]:
+    - complementary [ref=e27]:
+      - generic [ref=e29]:
+        - paragraph [ref=e30]: 图层
+        - heading "4 个节点" [level=2] [ref=e31]
+      - list [ref=e32]:
+        - button "AKI Label 文字 · z20" [ref=e33] [cursor=pointer]:
+          - generic [ref=e34]:
+            - strong [ref=e35]: AKI Label
+            - generic [ref=e36]: 文字 · z20
+        - button "Outcome Arrow 箭头 · z15" [ref=e37] [cursor=pointer]:
+          - generic [ref=e38]:
+            - strong [ref=e39]: Outcome Arrow
+            - generic [ref=e40]: 箭头 · z15
+        - button "Kidney Icon 图片 · z10" [active] [ref=e41] [cursor=pointer]:
+          - generic [ref=e42]:
+            - strong [ref=e43]: Kidney Icon
+            - generic [ref=e44]: 图片 · z10
+        - button "Main Panel 面板 · z1" [ref=e45] [cursor=pointer]:
+          - generic [ref=e46]:
+            - strong [ref=e47]: Main Panel
+            - generic [ref=e48]: 面板 · z1
+      - generic [ref=e49]:
+        - button "上移一层" [ref=e50] [cursor=pointer]
+        - button "下移一层" [ref=e51] [cursor=pointer]
+    - generic [ref=e53]:
+      - generic [ref=e54]:
+        - paragraph [ref=e55]: 画布
+        - heading "图片节点可直接拖角缩放，拖动可改位置，右侧属性面板负责精确数值。" [level=2] [ref=e56]
+      - generic [ref=e57]: "当前选中: Kidney Icon"
+    - complementary [ref=e63]:
+      - generic [ref=e65]:
+        - paragraph [ref=e66]: 属性
+        - heading "Kidney Icon" [level=2] [ref=e97]
+      - generic [ref=e68]:
+        - generic [ref=e69]:
+          - generic [ref=e70]: 类型
+          - textbox "类型" [ref=e71]: 图片
+        - generic [ref=e72]:
+          - generic [ref=e73]: X 坐标
+          - spinbutton "X 坐标" [ref=e74]: "824.04"
+        - generic [ref=e75]:
+          - generic [ref=e76]: Y 坐标
+          - spinbutton "Y 坐标" [ref=e77]: "452"
+        - generic [ref=e78]:
+          - generic [ref=e79]: 宽度
+          - spinbutton "宽度" [ref=e80]: "162.48"
+        - generic [ref=e81]:
+          - generic [ref=e82]: 高度
+          - spinbutton "高度" [ref=e83]: "122"
+        - generic [ref=e84]:
+          - generic [ref=e85]: 层级
+          - spinbutton "层级" [ref=e86]: "10"
+      - generic [ref=e98]:
+        - paragraph [ref=e99]: 当前资源
+        - generic [ref=e100]:
+          - img "当前资源" [ref=e101]
+          - generic [ref=e102]:
+            - strong [ref=e103]: Kidney Icon
+            - generic [ref=e104]: /assets/generated/kidney.png
+        - generic [ref=e105]:
+          - generic [ref=e106]: 资源地址
+          - textbox "资源地址" [ref=e107]: /assets/generated/kidney.png
+        - generic [ref=e108]:
+          - generic [ref=e109]: 生成提示词
+          - textbox "生成提示词" [ref=e110]: simplify this scientific icon while keeping the composition readable
+        - generic [ref=e111]:
+          - generic [ref=e112]: 反馈
+          - textbox "反馈" [ref=e113]: Prefer a cleaner silhouette and lower detail.
+        - button "重新生成图片节点" [ref=e114] [cursor=pointer]
+        - generic [ref=e115]:
+          - strong [ref=e117]: 生成状态
+          - paragraph [ref=e118]: 还没有发起生成请求。
+          - strong [ref=e120]: 生成结果
+          - paragraph [ref=e121]: 暂时还没有生成结果。
