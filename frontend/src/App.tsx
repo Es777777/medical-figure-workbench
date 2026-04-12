@@ -17,7 +17,7 @@ import { getElementLibrary, getLibraryCategories, getRecommendedLibraryItems, se
 import { EditorCanvas } from "./EditorCanvas";
 import { ExportCenter } from "./features/export/ExportCenter";
 import { ImportWorkbench } from "./features/import-session/ImportWorkbench";
-import { createImportSession, setImportMode as applyImportMode, setPanelDecision as applyPanelDecision } from "./features/import-session/state";
+import { createImportSession, getKeptPanelIds, setImportMode as applyImportMode, setPanelDecision as applyPanelDecision } from "./features/import-session/state";
 import type { ImportMode, ImportSession } from "./features/import-session/types";
 import { SplitReviewPanel } from "./features/import-session/SplitReviewPanel";
 import { ResourceBrowser } from "./features/resources/ResourceBrowser";
@@ -890,9 +890,18 @@ export function App() {
       return;
     }
 
-    const result = figureWorkbenchState.analysis.backendDrafts
-      ? insertBackendDraftsIntoScene(scene, figureWorkbenchState.analysis, language)
-      : insertFigurePanelsIntoScene(scene, figureWorkbenchState.analysis, language);
+    const keptPanelIds = importSession ? getKeptPanelIds(importSession) : figureWorkbenchState.analysis.panels.map((panel) => panel.id);
+    const filteredAnalysis = {
+      ...figureWorkbenchState.analysis,
+      panels: figureWorkbenchState.analysis.panels.filter((panel) => keptPanelIds.includes(panel.id)),
+    };
+    if (filteredAnalysis.panels.length === 0) {
+      return;
+    }
+
+    const result = filteredAnalysis.backendDrafts
+      ? insertBackendDraftsIntoScene(scene, filteredAnalysis, language)
+      : insertFigurePanelsIntoScene(scene, filteredAnalysis, language);
     setScene(result.scene);
     setSelectedNodeId(result.selectedNodeId);
     setFocusedTargets([]);

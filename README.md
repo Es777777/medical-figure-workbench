@@ -11,6 +11,25 @@ It is built for the real workflow that many research teams actually need:
 5. Replace content with medical resources
 6. Export usable outputs
 
+## Project Media
+
+This repository is ready for a richer GitHub front page, but media files are not checked in yet.
+
+Recommended future additions:
+- `docs/media/workbench-overview.png` - full UI screenshot
+- `docs/media/import-review-flow.gif` - short import-to-review demo
+- `docs/media/resource-replacement.png` - resource suggestion and replacement example
+
+Suggested placement once media exists:
+
+```md
+![Workbench overview](docs/media/workbench-overview.png)
+```
+
+```md
+![Import review flow](docs/media/import-review-flow.gif)
+```
+
 ## Why This Project Exists
 
 Most scientific figure tools are either:
@@ -205,6 +224,21 @@ If you want to continue productizing this project, the most useful next changes 
 - add explicit bulk import of only kept panels
 - add project session file import/export
 - improve README with screenshots or a short animated demo
+
+## Suggested GitHub Milestones
+
+- `v0.2 Workflow Stabilization`
+  - manual split modes
+  - keep/ignore-aware bulk import
+  - clearer progress and recovery states
+- `v0.3 Productized Editing`
+  - more module extraction from `App.tsx`
+  - stronger export quality
+  - improved scene save/load behavior
+- `v0.4 Analysis Quality`
+  - better backend analysis accuracy
+  - stronger OCR handling for scientific labels
+  - improved semantic reconstruction support
 
 ## Status
 
