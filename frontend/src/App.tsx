@@ -17,7 +17,7 @@ import { getElementLibrary, getLibraryCategories, getRecommendedLibraryItems, se
 import { EditorCanvas } from "./EditorCanvas";
 import { ExportCenter } from "./features/export/ExportCenter";
 import { buildProjectExportPayload } from "./features/export/export-utils";
-import { buildBatchTaskJsonExports } from "./features/export/batch-export";
+import { buildBatchTaskJsonExports, buildBatchTaskPngExports, buildBatchTaskSvgExports } from "./features/export/batch-export";
 import { buildTaskSvgExport } from "./features/export/svg-export";
 import { getExportValidationReport } from "./features/export/validation";
 import { ImageRefinementPanel } from "./features/editor/ImageRefinementPanel";
@@ -1115,6 +1115,42 @@ export function App() {
     URL.revokeObjectURL(url);
   }
 
+  function handleExportAllTaskJson() {
+    const payloads = buildBatchTaskJsonExports(project.tasks);
+    const content = JSON.stringify(payloads, null, 2);
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${project.id}-tasks-json.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleExportAllTaskSvg() {
+    const payloads = buildBatchTaskSvgExports(project.tasks);
+    const content = JSON.stringify(payloads, null, 2);
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${project.id}-tasks-svg.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleExportAllTaskPng() {
+    const payloads = buildBatchTaskPngExports(project.tasks);
+    const content = JSON.stringify(payloads, null, 2);
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${project.id}-tasks-png.json`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   function triggerProjectFilePicker() {
     projectFileInputRef.current?.click();
   }
@@ -2193,12 +2229,18 @@ export function App() {
               <div className="property-block export-block">
                 <p className="section-label">{language === "zh-CN" ? "导出与恢复" : "Export & Recovery"}</p>
                 <ExportCenter
+                  exportAllTaskPngLabel={copy.actions.exportAllTaskPng}
+                  exportAllTaskJsonLabel={copy.actions.exportAllTaskJson}
+                  exportAllTaskSvgLabel={copy.actions.exportAllTaskSvg}
                   exportAllTasksLabel={copy.actions.exportAllTasks}
                   exportLabel={copy.actions.exportJson}
                   exportChecksLabel={copy.labels.exportChecks}
                   exportPngLabel={copy.actions.exportPng}
                   exportSvgLabel={copy.actions.exportSvg}
                   onExportAllTasks={handleExportAllTasks}
+                  onExportAllTaskJson={handleExportAllTaskJson}
+                  onExportAllTaskPng={handleExportAllTaskPng}
+                  onExportAllTaskSvg={handleExportAllTaskSvg}
                   loadLabel={copy.actions.loadProject}
                   onExportProjectFile={handleExportProjectFile}
                   onExportPng={handleExportPng}

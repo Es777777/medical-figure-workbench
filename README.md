@@ -19,6 +19,7 @@ New capabilities include:
 - active-task switching for multi-figure workflows
 - export validation warnings
 - task-level SVG export path
+- batch task JSON and SVG export helpers
 
 This is the foundation for using the tool repeatedly across a whole manuscript instead of only one temporary browser session.
 
@@ -155,9 +156,10 @@ python -m unittest discover python/tests
 
 ### Next priority
 
-1. Improve SVG export fidelity beyond the initial path
-2. Add real screenshots and GIFs under `docs/media/`
-3. Continue reducing `App.tsx` orchestration pressure
+1. Improve SVG export fidelity for image, panel, and arrow content even further
+2. Add batch PNG export with a reliable render path
+3. Add real screenshots and GIFs under `docs/media/`
+4. Continue reducing `App.tsx` orchestration pressure
 
 ### Later
 

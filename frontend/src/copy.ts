@@ -46,6 +46,9 @@ type CopyBundle = {
     exportPng: string;
     exportSvg: string;
     exportAllTasks: string;
+    exportAllTaskJson: string;
+    exportAllTaskSvg: string;
+    exportAllTaskPng: string;
     dismissOnboarding: string;
     analyzePrompt: string;
     applyStructure: string;
@@ -186,6 +189,9 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       exportPng: "Export PNG",
       exportSvg: "Export SVG",
       exportAllTasks: "Export all tasks",
+      exportAllTaskJson: "Export all task JSON",
+      exportAllTaskSvg: "Export all task SVG",
+      exportAllTaskPng: "Export all task PNG",
       dismissOnboarding: "Hide",
       analyzePrompt: "Analyze prompt",
       applyStructure: "Apply structure",
@@ -330,6 +336,9 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       exportPng: "导出 PNG",
       exportSvg: "导出 SVG",
       exportAllTasks: "导出全部任务",
+      exportAllTaskJson: "批量导出任务 JSON",
+      exportAllTaskSvg: "批量导出任务 SVG",
+      exportAllTaskPng: "批量导出任务 PNG",
       dismissOnboarding: "关闭",
       analyzePrompt: "分析 Prompt",
       applyStructure: "应用结构",

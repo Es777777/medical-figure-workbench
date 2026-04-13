@@ -23,4 +23,43 @@ describe("task SVG export", () => {
     expect(result.content).toContain("<text");
     expect(result.content).toContain("Hello");
   });
+
+  it("includes panel and image placeholders in SVG output", () => {
+    const result = buildTaskSvgExport({
+      id: "task_2",
+      title: "Figure 2",
+      scene: {
+        canvas: { width: 1200, height: 800 },
+        nodes: [
+          { type: "panel", transform: { x: 10, y: 10, width: 300, height: 200 } },
+          { type: "image", transform: { x: 20, y: 20, width: 280, height: 160 } },
+        ],
+      },
+    } as any);
+    expect(result.content).toContain("<rect");
+    expect(result.content).toContain('width="300"');
+  });
+
+  it("includes arrow output in SVG", () => {
+    const result = buildTaskSvgExport({
+      id: "task_3",
+      title: "Figure 3",
+      scene: {
+        canvas: { width: 1200, height: 800 },
+        nodes: [
+          {
+            type: "arrow",
+            points: [
+              { x: 10, y: 20 },
+              { x: 100, y: 120 },
+            ],
+            transform: { x: 10, y: 20, width: 90, height: 100 },
+            style: { stroke: "#38558f", strokeWidth: 4 },
+          },
+        ],
+      },
+    } as any);
+    expect(result.content).toContain("<line");
+    expect(result.content).toContain('x1="10"');
+  });
 });
