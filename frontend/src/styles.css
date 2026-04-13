@@ -870,6 +870,37 @@ button {
   gap: var(--space-2);
 }
 
+.export-center-block {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.export-validation-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.export-warning {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+}
+
+.export-warning p {
+  margin: 0;
+}
+
+.export-warning-warning {
+  border-color: rgba(192, 104, 38, 0.45);
+}
+
+.export-warning-notice {
+  border-color: rgba(56, 85, 143, 0.35);
+}
+
 .advanced-tools-block details {
   background: rgba(255, 255, 255, 0.58);
   border: 1px solid var(--color-border);
@@ -887,6 +918,11 @@ button {
   display: grid;
   gap: var(--space-3);
   margin-top: var(--space-3);
+}
+
+.semantic-assistant-panel {
+  display: grid;
+  gap: var(--space-3);
 }
 
 .library-card {

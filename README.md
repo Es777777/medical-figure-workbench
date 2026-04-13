@@ -17,8 +17,21 @@ New capabilities include:
 - project-level save/load recovery
 - project file export and import
 - active-task switching for multi-figure workflows
+- export validation warnings
+- task-level SVG export path
 
 This is the foundation for using the tool repeatedly across a whole manuscript instead of only one temporary browser session.
+
+## Project Media
+
+Repository media assets should live under `docs/media/`.
+
+Planned assets:
+- `docs/media/workbench-overview.png`
+- `docs/media/import-review-flow.gif`
+- `docs/media/resource-replacement.png`
+
+If those files are not committed yet, see `docs/media/README.md` for capture guidance.
 
 ## Workflow
 
@@ -39,6 +52,7 @@ This is the foundation for using the tool repeatedly across a whole manuscript i
 4. Save project progress locally
 5. Export the project file as JSON
 6. Reopen the project file later and resume work
+7. Review export validation before PNG/SVG output
 
 ## Quick Start
 
@@ -85,6 +99,8 @@ start_all.bat
   - downloads the full project as JSON
 - `Open project file`
   - loads a previously exported project JSON file
+- `Export SVG`
+  - produces an initial task-level SVG output path
 - `New task`
   - creates a new figure task inside the current project
 
@@ -137,9 +153,9 @@ python -m unittest discover python/tests
 
 ### Next priority
 
-1. Bind more import/review state directly to each task
-2. Improve project switching so all task-scoped UI restores more completely
-3. Strengthen export fidelity and session portability
+1. Improve SVG export fidelity beyond the initial path
+2. Add real screenshots and GIFs under `docs/media/`
+3. Continue reducing `App.tsx` orchestration pressure
 
 ### Later
 

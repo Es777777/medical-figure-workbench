@@ -44,6 +44,7 @@ type CopyBundle = {
     newTask: string;
     exportJson: string;
     exportPng: string;
+    exportSvg: string;
     analyzePrompt: string;
     applyStructure: string;
     reconstructFigure: string;
@@ -108,6 +109,7 @@ type CopyBundle = {
     recommendedResources: string;
     projectTitle: string;
     taskList: string;
+    exportChecks: string;
   };
   messages: {
     noRegenerateRequest: string;
@@ -180,6 +182,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       newTask: "New task",
       exportJson: "Export JSON",
       exportPng: "Export PNG",
+      exportSvg: "Export SVG",
       analyzePrompt: "Analyze prompt",
       applyStructure: "Apply structure",
       reconstructFigure: "Reconstruct figure",
@@ -244,6 +247,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       recommendedResources: "Recommended resources",
       projectTitle: "Project title",
       taskList: "Task list",
+      exportChecks: "Export checks",
     },
     messages: {
       noRegenerateRequest: "No regenerate request yet.",
@@ -320,6 +324,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       newTask: "新建任务",
       exportJson: "导出 JSON",
       exportPng: "导出 PNG",
+      exportSvg: "导出 SVG",
       analyzePrompt: "分析 Prompt",
       applyStructure: "应用结构",
       reconstructFigure: "重构当前图",
@@ -384,6 +389,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       recommendedResources: "推荐资源",
       projectTitle: "项目标题",
       taskList: "任务列表",
+      exportChecks: "导出检查",
     },
     messages: {
       noRegenerateRequest: "还没有发起生成请求。",

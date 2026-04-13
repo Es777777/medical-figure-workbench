@@ -1,6 +1,7 @@
 import type { SceneGraph } from "@shared/scene-graph";
 
 import { buildSceneExportPayload } from "./export-utils";
+import type { ExportWarning } from "./validation";
 
 type Props = {
   scene: SceneGraph;
@@ -10,11 +11,15 @@ type Props = {
   openProjectFileLabel: string;
   exportLabel: string;
   exportPngLabel: string;
+  exportSvgLabel: string;
+  exportChecksLabel: string;
+  warnings: ExportWarning[];
   onSaveProject: () => void;
   onLoadProject: () => void;
   onExportProjectFile: () => void;
   onOpenProjectFile: () => void;
   onExportPng: () => void;
+  onExportSvg: () => void;
 };
 
 export function ExportCenter(props: Props) {
@@ -30,25 +35,44 @@ export function ExportCenter(props: Props) {
   }
 
   return (
-    <div className="export-center prompt-actions-row">
-      <button className="secondary-button" onClick={props.onSaveProject} type="button">
-        {props.saveLabel}
-      </button>
-      <button className="secondary-button" onClick={props.onLoadProject} type="button">
-        {props.loadLabel}
-      </button>
-      <button className="secondary-button" onClick={props.onExportProjectFile} type="button">
-        {props.saveProjectFileLabel}
-      </button>
-      <button className="secondary-button" onClick={props.onOpenProjectFile} type="button">
-        {props.openProjectFileLabel}
-      </button>
-      <button className="secondary-button" onClick={handleExportJson} type="button">
-        {props.exportLabel}
-      </button>
-      <button className="secondary-button" onClick={props.onExportPng} type="button">
-        {props.exportPngLabel}
-      </button>
+    <div className="export-center export-center-block">
+      <div className="prompt-actions-row">
+        <button className="secondary-button" onClick={props.onSaveProject} type="button">
+          {props.saveLabel}
+        </button>
+        <button className="secondary-button" onClick={props.onLoadProject} type="button">
+          {props.loadLabel}
+        </button>
+        <button className="secondary-button" onClick={props.onExportProjectFile} type="button">
+          {props.saveProjectFileLabel}
+        </button>
+        <button className="secondary-button" onClick={props.onOpenProjectFile} type="button">
+          {props.openProjectFileLabel}
+        </button>
+        <button className="secondary-button" onClick={handleExportJson} type="button">
+          {props.exportLabel}
+        </button>
+        <button className="secondary-button" onClick={props.onExportPng} type="button">
+          {props.exportPngLabel}
+        </button>
+        <button className="secondary-button" onClick={props.onExportSvg} type="button">
+          {props.exportSvgLabel}
+        </button>
+      </div>
+
+      <div className="export-validation-list">
+        <strong>{props.exportChecksLabel}</strong>
+        {props.warnings.length > 0 ? (
+          props.warnings.map((warning) => (
+            <article className={`export-warning export-warning-${warning.severity}`} key={warning.code}>
+              <strong>{warning.code}</strong>
+              <p>{warning.message}</p>
+            </article>
+          ))
+        ) : (
+          <p className="technical-note">No export issues detected.</p>
+        )}
+      </div>
     </div>
   );
 }

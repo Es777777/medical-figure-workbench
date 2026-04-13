@@ -17,6 +17,8 @@ import { getElementLibrary, getLibraryCategories, getRecommendedLibraryItems, se
 import { EditorCanvas } from "./EditorCanvas";
 import { ExportCenter } from "./features/export/ExportCenter";
 import { buildProjectExportPayload } from "./features/export/export-utils";
+import { buildTaskSvgExport } from "./features/export/svg-export";
+import { getExportValidationReport } from "./features/export/validation";
 import { ImageRefinementPanel } from "./features/editor/ImageRefinementPanel";
 import { ImportWorkbench } from "./features/import-session/ImportWorkbench";
 import { createImportSession, getKeptPanelIds, setImportMode as applyImportMode, setPanelDecision as applyPanelDecision } from "./features/import-session/state";
@@ -27,6 +29,7 @@ import { TaskListPanel } from "./features/project/TaskListPanel";
 import type { FigureProject } from "./features/project/types";
 import { SplitReviewPanel } from "./features/import-session/SplitReviewPanel";
 import { ResourceBrowser } from "./features/resources/ResourceBrowser";
+import { SemanticAssistantPanel } from "./features/semantic-assistant/SemanticAssistantPanel";
 import {
   attachBackendDrafts,
   analyzeFigureFile,
@@ -583,6 +586,7 @@ export function App() {
     return getRecommendedLibraryItems(language, context).slice(0, 6);
   }, [figureWorkbenchState.analysis, language, selectedNode]);
   const activeTask = useMemo(() => project.tasks.find((task) => task.id === project.currentTaskId) ?? project.tasks[0], [project]);
+  const exportValidation = useMemo(() => (activeTask ? getExportValidationReport(activeTask) : { warnings: [] }), [activeTask]);
   const reviewPanels = useMemo(() => {
     const decisionMap = new Map(importSession?.panels.map((panel) => [panel.id, panel.decision]));
     return (figureWorkbenchState.analysis?.panels ?? []).map((panel) => ({
@@ -1071,6 +1075,21 @@ export function App() {
 
   function handleExportProjectFile() {
     const payload = buildProjectExportPayload(project);
+    const blob = new Blob([payload.content], { type: payload.mimeType });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = payload.fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleExportSvg() {
+    if (!activeTask) {
+      return;
+    }
+
+    const payload = buildTaskSvgExport(activeTask);
     const blob = new Blob([payload.content], { type: payload.mimeType });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
@@ -1821,122 +1840,19 @@ export function App() {
             </button>
           </div>
 
-          <div className="property-block advanced-tools-block">
-            <details>
-              <summary>{copy.sections.promptPlanner}</summary>
-              <div className="advanced-tool-content">
-                <p className="library-hint">{copy.messages.promptHint}</p>
-                <label>
-                  <span>{copy.labels.prompt}</span>
-                  <textarea
-                    onChange={(event) => setAnalyzeState((currentState) => ({ ...currentState, prompt: event.target.value }))}
-                    rows={5}
-                    value={analyzeState.prompt}
-                  />
-                </label>
-                <div className="prompt-actions-row">
-                  <button className="secondary-button" onClick={handleAnalyzePrompt} type="button">
-                    {copy.actions.analyzePrompt}
-                  </button>
-                  <button className="secondary-button" disabled={!analyzeState.response || analyzeState.acceptedActionIds.length === 0} onClick={handleApplyPromptStructure} type="button">
-                    {copy.actions.applyStructure}
-                  </button>
-                </div>
-                <div className="response-panel compact-response-panel">
-                  <div className="response-header">
-                    <strong>{copy.labels.analysisStatus}</strong>
-                    {analyzeState.mode ? <span className={`mode-badge mode-${analyzeState.mode}`}>{analyzeState.mode}</span> : null}
-                  </div>
-                  {analyzeState.response ? (
-                    <>
-                      <p>{analyzeState.response.summary}</p>
-                      <div className="token-list">
-                        {analyzeState.response.entities.map((entity) => (
-                          <span className="token-chip" key={entity.id}>
-                            {entity.label}
-                            {entity.libraryItemId ? ` · ${entity.libraryItemId}` : ""}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="token-list relation-list">
-                        {analyzeState.response.relations.map((relation) => (
-                          <span className="token-chip relation-chip" key={relation.id}>
-                            {relation.semantics}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="response-subsection">
-                        <strong>{copy.labels.proposedActions}</strong>
-                        {analyzeState.response.actions.length > 0 ? (
-                          renderPlannerActionSections("analysis", analyzeState.response.actions)
-                        ) : (
-                          <p>{copy.messages.noActions}</p>
-                        )}
-                      </div>
-                      {analyzeState.message ? <p className="technical-note">{analyzeState.message}</p> : null}
-                    </>
-                  ) : (
-                    <p>{copy.messages.noPromptAnalysis}</p>
-                  )}
-                </div>
-              </div>
-            </details>
-
-            <details>
-              <summary>{copy.sections.reconstruction}</summary>
-              <div className="advanced-tool-content">
-                <label>
-                  <span>{copy.labels.problemNotes}</span>
-                  <textarea
-                    onChange={(event) => setReconstructState((currentState) => ({ ...currentState, problemNotes: event.target.value }))}
-                    rows={4}
-                    value={reconstructState.problemNotes}
-                  />
-                </label>
-                <div className="prompt-actions-row">
-                  <button className="secondary-button" onClick={handleReconstructFigure} type="button">
-                    {copy.actions.reconstructFigure}
-                  </button>
-                  <button className="secondary-button" disabled={!reconstructState.response || reconstructState.acceptedActionIds.length === 0} onClick={handleApplyReconstruction} type="button">
-                    {copy.actions.applyReconstruction}
-                  </button>
-                </div>
-                <div className="response-panel compact-response-panel">
-                  <div className="response-header">
-                    <strong>{copy.labels.reconstructionStatus}</strong>
-                    {reconstructState.mode ? <span className={`mode-badge mode-${reconstructState.mode}`}>{reconstructState.mode}</span> : null}
-                  </div>
-                  {reconstructState.response ? (
-                    <>
-                      <p>{reconstructState.response.correctedSummary}</p>
-                      <div className="token-list relation-list">
-                        {reconstructState.response.issues.map((issue, index) => (
-                          <article className={`issue-card${targetLocalization?.source === "reconstruction" && targetLocalization.originId === `issue:${issue.code}:${index}` ? " is-focused" : ""}`} key={`${issue.code}-${index}`}>
-                            <strong>{issue.code}</strong>
-                            <p>{issue.message}</p>
-                            <div className="token-list">
-                              {(issue.targetRefs ?? []).map((target) => renderTargetChip("reconstruction", `issue:${issue.code}:${index}`, target, "issue-chip"))}
-                            </div>
-                          </article>
-                        ))}
-                      </div>
-                      <div className="response-subsection">
-                        <strong>{copy.labels.proposedActions}</strong>
-                        {reconstructState.response.actions.length > 0 ? (
-                          renderPlannerActionSections("reconstruction", reconstructState.response.actions)
-                        ) : (
-                          <p>{copy.messages.noActions}</p>
-                        )}
-                      </div>
-                      {reconstructState.message ? <p className="technical-note">{reconstructState.message}</p> : null}
-                    </>
-                  ) : (
-                    <p>{copy.messages.noReconstruction}</p>
-                  )}
-                </div>
-              </div>
-            </details>
-          </div>
+          <SemanticAssistantPanel
+            analyzeState={analyzeState}
+            language={language}
+            onAnalyzePrompt={handleAnalyzePrompt}
+            onAnalyzePromptChange={(value) => setAnalyzeState((currentState) => ({ ...currentState, prompt: value }))}
+            onApplyPromptStructure={handleApplyPromptStructure}
+            onApplyReconstruction={handleApplyReconstruction}
+            onProblemNotesChange={(value) => setReconstructState((currentState) => ({ ...currentState, problemNotes: value }))}
+            onReconstructFigure={handleReconstructFigure}
+            reconstructState={reconstructState}
+            renderPlannerActionSections={renderPlannerActionSections}
+            renderTargetChip={renderTargetChip}
+          />
 
           <div className="property-block flow-layout-block">
             <p className="section-label">{copy.sections.flowLayout}</p>
@@ -2248,10 +2164,13 @@ export function App() {
                 <p className="section-label">{language === "zh-CN" ? "导出与恢复" : "Export & Recovery"}</p>
                 <ExportCenter
                   exportLabel={copy.actions.exportJson}
+                  exportChecksLabel={copy.labels.exportChecks}
                   exportPngLabel={copy.actions.exportPng}
+                  exportSvgLabel={copy.actions.exportSvg}
                   loadLabel={copy.actions.loadProject}
                   onExportProjectFile={handleExportProjectFile}
                   onExportPng={handleExportPng}
+                  onExportSvg={handleExportSvg}
                   onLoadProject={handleLoadProject}
                   onOpenProjectFile={triggerProjectFilePicker}
                   onSaveProject={handleSaveProject}
@@ -2259,6 +2178,7 @@ export function App() {
                   saveProjectFileLabel={copy.actions.saveProjectFile}
                   saveLabel={copy.actions.saveProject}
                   scene={scene}
+                  warnings={exportValidation.warnings}
                 />
               </div>
 
