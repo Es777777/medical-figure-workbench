@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { createProjectState } from "../../state/project-store";
 import { createProject, createTask, deserializeProject, serializeProject, switchActiveTask, updateTaskScene } from "./store";
 
 describe("project store", () => {
@@ -28,5 +29,10 @@ describe("project store", () => {
     const project = createProject("Paper Figures");
     const updated = updateTaskScene(project, project.currentTaskId, { id: "scene_1", nodes: [] } as any);
     expect(updated.tasks[0]?.scene?.id).toBe("scene_1");
+  });
+
+  it("creates a project state wrapper", () => {
+    const state = createProjectState("Medical Figure Project");
+    expect(state.project.title).toBe("Medical Figure Project");
   });
 });

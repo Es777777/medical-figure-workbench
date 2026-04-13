@@ -925,6 +925,31 @@ button {
   gap: var(--space-3);
 }
 
+.onboarding-card {
+  background: linear-gradient(135deg, rgba(12, 143, 138, 0.08), rgba(229, 143, 58, 0.1));
+  border: 1px solid rgba(12, 143, 138, 0.18);
+  border-radius: var(--radius-lg);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.onboarding-card-header {
+  align-items: center;
+  display: flex;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
+.onboarding-steps {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.onboarding-steps li + li {
+  margin-top: var(--space-2);
+}
+
 .library-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

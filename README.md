@@ -33,6 +33,8 @@ Planned assets:
 
 If those files are not committed yet, see `docs/media/README.md` for capture guidance.
 
+The recommended capture set now also includes a first-use onboarding state, so future screenshots and GIFs can show how a new user enters the workflow.
+
 ## Workflow
 
 ### Figure Workflow

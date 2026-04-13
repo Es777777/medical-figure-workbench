@@ -31,6 +31,8 @@ import type { FigureProject } from "./features/project/types";
 import { SplitReviewPanel } from "./features/import-session/SplitReviewPanel";
 import { ResourceBrowser } from "./features/resources/ResourceBrowser";
 import { SemanticAssistantPanel } from "./features/semantic-assistant/SemanticAssistantPanel";
+import { createProjectState } from "./state/project-store";
+import { OnboardingCard } from "./features/onboarding/OnboardingCard";
 import {
   attachBackendDrafts,
   analyzeFigureFile,
@@ -543,7 +545,7 @@ export function App() {
   const copy = UI_COPY[language];
 
   const [composeRequest] = useState<ComposeFigureRequest | null>(bootstrap.composeRequest);
-  const [project, setProject] = useState<FigureProject>(() => createProject("Medical Figure Project"));
+  const [project, setProject] = useState<FigureProject>(() => createProjectState("Medical Figure Project").project);
   const [scene, setScene] = useState<SceneGraph | null>(bootstrap.scene);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(bootstrap.selectedNodeId);
   const [analyzeState, setAnalyzeState] = useState<AnalyzeState>(initialAnalyzeState);
@@ -552,6 +554,7 @@ export function App() {
   const [figureWorkbenchState, setFigureWorkbenchState] = useState<FigureWorkbenchState>(initialFigureWorkbenchState);
   const [importSession, setImportSession] = useState<ImportSession | null>(null);
   const [canvasScale, setCanvasScale] = useState<number>(1);
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(true);
   const [hasManualZoom, setHasManualZoom] = useState<boolean>(false);
   const [flowInput, setFlowInput] = useState<string>("感染\n炎症\n器官损伤\n修复");
   const [libraryQuery, setLibraryQuery] = useState<string>("");
@@ -2074,10 +2077,24 @@ export function App() {
           <div className={`canvas-scroll${targetLocalization ? " is-localizing" : ""}`} ref={canvasViewportRef}>
             <div className="canvas-stage">
               {scene.nodes.length === 0 ? (
-                <div className="canvas-empty-state">
-                  <strong>{copy.actions.parseAndSplitFigure}</strong>
-                  <p>{copy.messages.canvasEmptyHint}</p>
-                </div>
+                <>
+                  {showOnboarding ? (
+                    <OnboardingCard
+                      dismissLabel={copy.actions.dismissOnboarding}
+                      onDismiss={() => setShowOnboarding(false)}
+                      steps={[
+                        copy.messages.quickImportHint,
+                        language === "zh-CN" ? "检查分图与 OCR 结果，再决定导入哪些 panel。" : "Review the split panels and OCR results before importing.",
+                        language === "zh-CN" ? "在画布中替换资源、编辑文本并导出。" : "Refine resources and text on the canvas, then export.",
+                      ]}
+                      title={copy.labels.importWorkflow}
+                    />
+                  ) : null}
+                  <div className="canvas-empty-state">
+                    <strong>{copy.actions.parseAndSplitFigure}</strong>
+                    <p>{copy.messages.canvasEmptyHint}</p>
+                  </div>
+                </>
               ) : null}
               <EditorCanvas
                 highlightTargets={focusedTargets}
@@ -2176,10 +2193,12 @@ export function App() {
               <div className="property-block export-block">
                 <p className="section-label">{language === "zh-CN" ? "导出与恢复" : "Export & Recovery"}</p>
                 <ExportCenter
+                  exportAllTasksLabel={copy.actions.exportAllTasks}
                   exportLabel={copy.actions.exportJson}
                   exportChecksLabel={copy.labels.exportChecks}
                   exportPngLabel={copy.actions.exportPng}
                   exportSvgLabel={copy.actions.exportSvg}
+                  onExportAllTasks={handleExportAllTasks}
                   loadLabel={copy.actions.loadProject}
                   onExportProjectFile={handleExportProjectFile}
                   onExportPng={handleExportPng}

@@ -26,6 +26,7 @@ This directory holds presentation assets for the repository homepage and future 
 3. Review panel decisions
 4. Import into canvas
 5. Show export validation and export actions
+6. Show the onboarding card before the first import for first-use documentation
 
 ## Notes
 
