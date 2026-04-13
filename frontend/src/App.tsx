@@ -16,10 +16,15 @@ import { UI_COPY, type Language } from "./copy";
 import { getElementLibrary, getLibraryCategories, getRecommendedLibraryItems, searchLibraryItems, type LibraryCategoryId } from "./element-library";
 import { EditorCanvas } from "./EditorCanvas";
 import { ExportCenter } from "./features/export/ExportCenter";
+import { buildProjectExportPayload } from "./features/export/export-utils";
 import { ImageRefinementPanel } from "./features/editor/ImageRefinementPanel";
 import { ImportWorkbench } from "./features/import-session/ImportWorkbench";
 import { createImportSession, getKeptPanelIds, setImportMode as applyImportMode, setPanelDecision as applyPanelDecision } from "./features/import-session/state";
 import type { ImportMode, ImportSession } from "./features/import-session/types";
+import { ProjectToolbar } from "./features/project/ProjectToolbar";
+import { createProject, createTask, deserializeProject, serializeProject, switchActiveTask, updateTask } from "./features/project/store";
+import { TaskListPanel } from "./features/project/TaskListPanel";
+import type { FigureProject } from "./features/project/types";
 import { SplitReviewPanel } from "./features/import-session/SplitReviewPanel";
 import { ResourceBrowser } from "./features/resources/ResourceBrowser";
 import {
@@ -184,6 +189,8 @@ const initialFigureWorkbenchState: FigureWorkbenchState = {
   semanticMessage: "",
   error: "",
 };
+
+const PROJECT_STORAGE_KEY = "medical-figure-workbench:project";
 
 const MEDICAL_RESOURCE_CARDS: MedicalResourceCard[] = [
   {
@@ -532,6 +539,7 @@ export function App() {
   const copy = UI_COPY[language];
 
   const [composeRequest] = useState<ComposeFigureRequest | null>(bootstrap.composeRequest);
+  const [project, setProject] = useState<FigureProject>(() => createProject("Medical Figure Project"));
   const [scene, setScene] = useState<SceneGraph | null>(bootstrap.scene);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(bootstrap.selectedNodeId);
   const [analyzeState, setAnalyzeState] = useState<AnalyzeState>(initialAnalyzeState);
@@ -549,6 +557,7 @@ export function App() {
   const regenerateRequestIdRef = useRef<string | null>(null);
   const canvasViewportRef = useRef<HTMLDivElement | null>(null);
   const figureFileInputRef = useRef<HTMLInputElement | null>(null);
+  const projectFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const orderedNodes = useMemo(() => (scene ? sortNodesByZIndex(scene.nodes) : []), [scene]);
   const layers = useMemo(() => [...orderedNodes].reverse(), [orderedNodes]);
@@ -573,6 +582,7 @@ export function App() {
     const context = `${selectedNode?.name ?? ""} ${figureWorkbenchState.analysis?.mergedRecognizedText ?? ""} ${figureWorkbenchState.analysis?.recommendedPrompt ?? ""}`;
     return getRecommendedLibraryItems(language, context).slice(0, 6);
   }, [figureWorkbenchState.analysis, language, selectedNode]);
+  const activeTask = useMemo(() => project.tasks.find((task) => task.id === project.currentTaskId) ?? project.tasks[0], [project]);
   const reviewPanels = useMemo(() => {
     const decisionMap = new Map(importSession?.panels.map((panel) => [panel.id, panel.decision]));
     return (figureWorkbenchState.analysis?.panels ?? []).map((panel) => ({
@@ -586,6 +596,45 @@ export function App() {
     document.title = copy.pageTitle;
     persistLanguagePreference(language);
   }, [copy.pageTitle, language]);
+
+  useEffect(() => {
+    if (!activeTask) {
+      return;
+    }
+
+    setScene(activeTask.scene ?? bootstrap.scene);
+    setImportSession(
+      activeTask.sourceName || activeTask.panelDecisions.length > 0
+        ? {
+            ...(createImportSession({ fileName: activeTask.sourceName, sourceDataUrl: activeTask.sourceDataUrl }) as ImportSession),
+            importMode: activeTask.importMode,
+            panels: activeTask.panelDecisions,
+          }
+        : null,
+    );
+    setFigureWorkbenchState((currentState) => ({
+      ...currentState,
+      contextNotes: activeTask.contextNotes || currentState.contextNotes,
+      analysis: activeTask.analysis,
+      recommendedPrompt: activeTask.recommendedPrompt,
+    }));
+    setAnalyzeState((currentState) => ({
+      ...currentState,
+      prompt: activeTask.analyzePrompt || currentState.prompt,
+      ...activeTask.analyzeState,
+    }));
+    setReconstructState((currentState) => ({
+      ...currentState,
+      problemNotes: activeTask.reconstructProblemNotes || currentState.problemNotes,
+      ...activeTask.reconstructState,
+    }));
+    setRegenerateState((currentState) => ({
+      ...currentState,
+      prompt: activeTask.regeneratePrompt || currentState.prompt,
+      feedback: activeTask.regenerateFeedback || currentState.feedback,
+      ...activeTask.regenerateState,
+    }));
+  }, [activeTask, bootstrap.scene]);
 
   useEffect(() => {
     setNumericDrafts(selectedNode ? buildNumericDraftState(selectedNode) : null);
@@ -824,7 +873,22 @@ export function App() {
 
     try {
       const currentImportMode = importSession?.importMode ?? "auto";
-      setImportSession(createImportSession({ fileName: file.name, sourceDataUrl: URL.createObjectURL(file) }));
+      const sourceDataUrl = URL.createObjectURL(file);
+      setImportSession(createImportSession({ fileName: file.name, sourceDataUrl }));
+      setProject((currentProject) =>
+        updateTask(currentProject, currentProject.currentTaskId, {
+          title: file.name,
+          sourceName: file.name,
+          sourceDataUrl,
+          contextNotes: figureWorkbenchState.contextNotes,
+          importMode: currentImportMode,
+          analyzePrompt: analyzeState.prompt,
+          reconstructProblemNotes: reconstructState.problemNotes,
+          regeneratePrompt: regenerateState.prompt,
+          regenerateFeedback: regenerateState.feedback,
+          status: "parsed",
+        }),
+      );
       let analysis = await analyzeFigureFile(file, figureWorkbenchState.contextNotes, language, currentImportMode);
       if (composeRequest) {
         const draftResult = await requestAnalyzeAsset({
@@ -847,6 +911,28 @@ export function App() {
         semanticMessage: "",
         error: "",
       }));
+      setProject((currentProject) =>
+        updateTask(currentProject, currentProject.currentTaskId, {
+          analysis,
+          recommendedPrompt: analysis.recommendedPrompt,
+          mergedRecognizedText: analysis.mergedRecognizedText,
+          panelDecisions: analysis.panels.map((panel) => ({ id: panel.id, label: panel.label, decision: "pending" })),
+          analyzeState: {
+            ...analyzeState,
+          },
+          reconstructState: {
+            ...reconstructState,
+          },
+          regenerateState: {
+            status: regenerateState.status,
+            mode: regenerateState.mode,
+            message: regenerateState.message,
+            response: regenerateState.response,
+            appliedVariantId: regenerateState.appliedVariantId,
+          },
+          status: "in-review",
+        }),
+      );
       setImportSession((currentSession) =>
         currentSession
           ? {
@@ -880,10 +966,21 @@ export function App() {
         importMode: mode,
       };
     });
+    setProject((currentProject) => updateTask(currentProject, currentProject.currentTaskId, { importMode: mode }));
   }
 
   function handlePanelDecision(panelId: string, decision: "keep" | "ignore") {
     setImportSession((currentSession) => (currentSession ? applyPanelDecision(currentSession, panelId, decision) : currentSession));
+    setProject((currentProject) => {
+      const task = currentProject.tasks.find((item) => item.id === currentProject.currentTaskId);
+      if (!task) {
+        return currentProject;
+      }
+
+      return updateTask(currentProject, currentProject.currentTaskId, {
+        panelDecisions: task.panelDecisions.map((panel) => (panel.id === panelId ? { ...panel, decision } : panel)),
+      });
+    });
   }
 
   function handleImportDetectedPanels() {
@@ -904,6 +1001,7 @@ export function App() {
       ? insertBackendDraftsIntoScene(scene, filteredAnalysis, language)
       : insertFigurePanelsIntoScene(scene, filteredAnalysis, language);
     setScene(result.scene);
+    setProject((currentProject) => updateTask(currentProject, currentProject.currentTaskId, { scene: result.scene, status: "editing" }));
     setSelectedNodeId(result.selectedNodeId);
     setFocusedTargets([]);
     setTargetLocalization(null);
@@ -944,19 +1042,19 @@ export function App() {
   }
 
   function handleSaveProject() {
-    if (!scene) {
+    if (!project) {
       return;
     }
-    window.localStorage.setItem("medical-figure-workbench:scene", JSON.stringify(scene));
+    window.localStorage.setItem(PROJECT_STORAGE_KEY, serializeProject(project));
   }
 
   function handleLoadProject() {
-    const raw = window.localStorage.getItem("medical-figure-workbench:scene");
+    const raw = window.localStorage.getItem(PROJECT_STORAGE_KEY);
     if (!raw) {
       return;
     }
 
-    setScene(JSON.parse(raw) as SceneGraph);
+    setProject(deserializeProject(raw));
   }
 
   function handleExportPng() {
@@ -969,6 +1067,32 @@ export function App() {
     anchor.href = canvasElement.toDataURL("image/png");
     anchor.download = `${scene?.id ?? "medical-figure-workbench"}.png`;
     anchor.click();
+  }
+
+  function handleExportProjectFile() {
+    const payload = buildProjectExportPayload(project);
+    const blob = new Blob([payload.content], { type: payload.mimeType });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = payload.fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function triggerProjectFilePicker() {
+    projectFileInputRef.current?.click();
+  }
+
+  async function handleOpenProjectFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    const raw = await file.text();
+    setProject(deserializeProject(raw));
   }
 
   async function handleAnalyzeImportedSemantics() {
@@ -1023,6 +1147,23 @@ export function App() {
       appliedActionIds: [],
       staleActionIds: [],
     }));
+    setProject((currentProject) =>
+      updateTask(currentProject, currentProject.currentTaskId, {
+        recommendedPrompt: refreshedPrompt,
+        analyzePrompt: refreshedPrompt,
+        analyzeState: {
+          ...currentProject.tasks.find((task) => task.id === currentProject.currentTaskId)?.analyzeState,
+          status: "done",
+          mode: result.mode,
+          message: result.message,
+          response: result.response,
+          acceptedActionIds: result.response.actions.filter((action) => action.bucket === "applyable").map((action) => action.id),
+          rejectedActionIds: [],
+          appliedActionIds: [],
+          staleActionIds: [],
+        },
+      }),
+    );
   }
 
   async function handleAnalyzePrompt() {
@@ -1062,6 +1203,22 @@ export function App() {
       appliedActionIds: [],
       staleActionIds: [],
     }));
+    setProject((currentProject) =>
+      updateTask(currentProject, currentProject.currentTaskId, {
+        analyzePrompt: analyzeState.prompt,
+        analyzeState: {
+          ...currentProject.tasks.find((task) => task.id === currentProject.currentTaskId)?.analyzeState,
+          status: "done",
+          mode: result.mode,
+          message: result.message,
+          response: result.response,
+          acceptedActionIds: result.response.actions.filter((action) => action.bucket === "applyable").map((action) => action.id),
+          rejectedActionIds: [],
+          appliedActionIds: [],
+          staleActionIds: [],
+        },
+      }),
+    );
   }
 
   function handleApplyPromptStructure() {
@@ -1088,6 +1245,12 @@ export function App() {
       appliedActionIds: [...currentState.appliedActionIds, ...applyingActionIds],
       staleActionIds: currentState.staleActionIds.filter((actionId) => !applyingActionIds.includes(actionId)),
     }));
+    setProject((currentProject) =>
+      updateTask(currentProject, currentProject.currentTaskId, {
+        scene: result.scene,
+        status: "editing",
+      }),
+    );
   }
 
   async function handleReconstructFigure() {
@@ -1125,6 +1288,22 @@ export function App() {
       appliedActionIds: [],
       staleActionIds: [],
     }));
+    setProject((currentProject) =>
+      updateTask(currentProject, currentProject.currentTaskId, {
+        reconstructProblemNotes: reconstructState.problemNotes,
+        reconstructState: {
+          ...currentProject.tasks.find((task) => task.id === currentProject.currentTaskId)?.reconstructState,
+          status: "done",
+          mode: result.mode,
+          message: result.message,
+          response: result.response,
+          acceptedActionIds: result.response.actions.filter((action) => action.bucket === "applyable").map((action) => action.id),
+          rejectedActionIds: [],
+          appliedActionIds: [],
+          staleActionIds: [],
+        },
+      }),
+    );
   }
 
   function handleApplyReconstruction() {
@@ -1151,6 +1330,12 @@ export function App() {
       appliedActionIds: [...currentState.appliedActionIds, ...applyingActionIds],
       staleActionIds: currentState.staleActionIds.filter((actionId) => !applyingActionIds.includes(actionId)),
     }));
+    setProject((currentProject) =>
+      updateTask(currentProject, currentProject.currentTaskId, {
+        scene: result.scene,
+        status: "editing",
+      }),
+    );
   }
 
   function clearTargetLocalization() {
@@ -1256,6 +1441,20 @@ export function App() {
       response: result.response,
       appliedVariantId: null,
     }));
+    setProject((currentProject) =>
+      updateTask(currentProject, currentProject.currentTaskId, {
+        regeneratePrompt: regenerateState.prompt,
+        regenerateFeedback: regenerateState.feedback,
+        regenerateState: {
+          ...currentProject.tasks.find((task) => task.id === currentProject.currentTaskId)?.regenerateState,
+          status: "done",
+          mode: result.mode,
+          message: result.message,
+          response: result.response,
+          appliedVariantId: null,
+        },
+      }),
+    );
   }
 
   function applyVariant(variant: RegenerateNodeVariant) {
@@ -1268,6 +1467,20 @@ export function App() {
       ...currentState,
       appliedVariantId: variant.id,
     }));
+    setProject((currentProject) =>
+      updateTask(currentProject, currentProject.currentTaskId, {
+        regenerateState: {
+          ...(currentProject.tasks.find((task) => task.id === currentProject.currentTaskId)?.regenerateState ?? {
+            status: "idle",
+            mode: null,
+            message: "",
+            response: null,
+            appliedVariantId: null,
+          }),
+          appliedVariantId: variant.id,
+        },
+      }),
+    );
   }
 
   function renderVariantPreviewSource(variant: RegenerateNodeVariant): string {
@@ -1531,6 +1744,21 @@ export function App() {
         </div>
       </header>
 
+      <ProjectToolbar
+        labels={{
+          saveProject: copy.actions.saveProject,
+          loadProject: copy.actions.loadProject,
+          newTask: copy.actions.newTask,
+        }}
+        onCreateTask={() => setProject((currentProject) => createTask(currentProject, `Figure ${currentProject.tasks.length + 1}`))}
+        onOpenProject={handleLoadProject}
+        onSaveProject={handleSaveProject}
+        onTitleChange={(value) => setProject((currentProject) => ({ ...currentProject, title: value, updatedAt: new Date().toISOString() }))}
+        title={project.title}
+        titleLabel={copy.labels.projectTitle}
+      />
+      <input accept="application/json" hidden onChange={handleOpenProjectFile} ref={projectFileInputRef} type="file" />
+
       <section className="workflow-bar panel">
         <button className="primary-button" onClick={triggerFigureFilePicker} type="button">
           {copy.actions.uploadFigure}
@@ -1548,6 +1776,15 @@ export function App() {
 
       <main className="editor-layout">
         <aside className="panel sidebar-panel">
+          <TaskListPanel
+            createLabel={copy.actions.newTask}
+            currentTaskId={project.currentTaskId}
+            onCreateTask={() => setProject((currentProject) => createTask(currentProject, `Figure ${currentProject.tasks.length + 1}`))}
+            onSelectTask={(taskId) => setProject((currentProject) => switchActiveTask(currentProject, taskId))}
+            tasks={project.tasks.map((task) => ({ id: task.id, title: task.title, status: task.status, updatedAt: task.updatedAt }))}
+            title={copy.labels.taskList}
+          />
+
           <div className="panel-heading">
             <div>
               <p className="section-label">{copy.sections.layers}</p>
@@ -2013,9 +2250,13 @@ export function App() {
                   exportLabel={copy.actions.exportJson}
                   exportPngLabel={copy.actions.exportPng}
                   loadLabel={copy.actions.loadProject}
+                  onExportProjectFile={handleExportProjectFile}
                   onExportPng={handleExportPng}
                   onLoadProject={handleLoadProject}
+                  onOpenProjectFile={triggerProjectFilePicker}
                   onSaveProject={handleSaveProject}
+                  openProjectFileLabel={copy.actions.openProjectFile}
+                  saveProjectFileLabel={copy.actions.saveProjectFile}
                   saveLabel={copy.actions.saveProject}
                   scene={scene}
                 />

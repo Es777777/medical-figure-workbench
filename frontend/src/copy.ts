@@ -39,6 +39,9 @@ type CopyBundle = {
     ignorePanel: string;
     saveProject: string;
     loadProject: string;
+    saveProjectFile: string;
+    openProjectFile: string;
+    newTask: string;
     exportJson: string;
     exportPng: string;
     analyzePrompt: string;
@@ -103,6 +106,8 @@ type CopyBundle = {
     backendDrafts: string;
     noOcrText: string;
     recommendedResources: string;
+    projectTitle: string;
+    taskList: string;
   };
   messages: {
     noRegenerateRequest: string;
@@ -170,6 +175,9 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       ignorePanel: "Ignore",
       saveProject: "Save project",
       loadProject: "Load project",
+      saveProjectFile: "Save project file",
+      openProjectFile: "Open project file",
+      newTask: "New task",
       exportJson: "Export JSON",
       exportPng: "Export PNG",
       analyzePrompt: "Analyze prompt",
@@ -234,6 +242,8 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       backendDrafts: "Backend drafts",
       noOcrText: "No OCR text",
       recommendedResources: "Recommended resources",
+      projectTitle: "Project title",
+      taskList: "Task list",
     },
     messages: {
       noRegenerateRequest: "No regenerate request yet.",
@@ -305,6 +315,9 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       ignorePanel: "忽略",
       saveProject: "保存项目",
       loadProject: "加载项目",
+      saveProjectFile: "保存项目文件",
+      openProjectFile: "打开项目文件",
+      newTask: "新建任务",
       exportJson: "导出 JSON",
       exportPng: "导出 PNG",
       analyzePrompt: "分析 Prompt",
@@ -369,6 +382,8 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       backendDrafts: "后端草稿",
       noOcrText: "暂无 OCR 文本",
       recommendedResources: "推荐资源",
+      projectTitle: "项目标题",
+      taskList: "任务列表",
     },
     messages: {
       noRegenerateRequest: "还没有发起生成请求。",

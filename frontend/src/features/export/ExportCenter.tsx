@@ -6,10 +6,14 @@ type Props = {
   scene: SceneGraph;
   saveLabel: string;
   loadLabel: string;
+  saveProjectFileLabel: string;
+  openProjectFileLabel: string;
   exportLabel: string;
   exportPngLabel: string;
   onSaveProject: () => void;
   onLoadProject: () => void;
+  onExportProjectFile: () => void;
+  onOpenProjectFile: () => void;
   onExportPng: () => void;
 };
 
@@ -32,6 +36,12 @@ export function ExportCenter(props: Props) {
       </button>
       <button className="secondary-button" onClick={props.onLoadProject} type="button">
         {props.loadLabel}
+      </button>
+      <button className="secondary-button" onClick={props.onExportProjectFile} type="button">
+        {props.saveProjectFileLabel}
+      </button>
+      <button className="secondary-button" onClick={props.onOpenProjectFile} type="button">
+        {props.openProjectFileLabel}
       </button>
       <button className="secondary-button" onClick={handleExportJson} type="button">
         {props.exportLabel}
