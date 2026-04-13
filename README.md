@@ -2,6 +2,29 @@
 
 Medical Figure Workbench is an internal-lab web tool for turning manuscript figures, graphical abstracts, and scientific mechanism diagrams into editable figure scenes.
 
+## 中文简介
+
+Medical Figure Workbench 是一个面向实验室内部使用的科研图处理工具，目标是把论文配图、graphical abstract 和机制图快速转换成可编辑的科研图场景。
+
+它当前支持的核心流程包括：
+
+1. 上传论文图或科研配图
+2. 自动或手动拆分分图 panel
+3. 复核 OCR、分图和语义建议
+4. 导入到画布继续编辑
+5. 替换医学资源、调整文字和结构
+6. 导出 task / project 结果
+
+目前项目已经具备：
+- figure 级导入、拆分、编辑和导出
+- project / task 级保存、切换和恢复
+- export validation
+- task PNG / SVG / JSON
+- project JSON
+- batch task JSON / SVG / PNG contract
+
+如果你主要是中文用户，可以先看本节快速了解项目定位，再继续阅读下面的英文 README 获取完整的启动方式、模块结构和路线图。
+
 It now supports a two-layer workflow:
 
 1. Figure-level import, split review, editing, and export
