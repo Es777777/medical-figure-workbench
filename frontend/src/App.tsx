@@ -17,6 +17,7 @@ import { getElementLibrary, getLibraryCategories, getRecommendedLibraryItems, se
 import { EditorCanvas } from "./EditorCanvas";
 import { ExportCenter } from "./features/export/ExportCenter";
 import { buildProjectExportPayload } from "./features/export/export-utils";
+import { buildBatchTaskJsonExports } from "./features/export/batch-export";
 import { buildTaskSvgExport } from "./features/export/svg-export";
 import { getExportValidationReport } from "./features/export/validation";
 import { ImageRefinementPanel } from "./features/editor/ImageRefinementPanel";
@@ -1095,6 +1096,18 @@ export function App() {
     const anchor = document.createElement("a");
     anchor.href = url;
     anchor.download = payload.fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function handleExportAllTasks() {
+    const payloads = buildBatchTaskJsonExports(project.tasks);
+    const content = JSON.stringify(payloads, null, 2);
+    const blob = new Blob([content], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${project.id}-tasks.json`;
     anchor.click();
     URL.revokeObjectURL(url);
   }

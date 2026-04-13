@@ -16,4 +16,9 @@ describe("export validation", () => {
     } as any);
     expect(report.warnings.map((item) => item.code)).toContain("empty-text");
   });
+
+  it("warns when task title is missing", () => {
+    const report = getExportValidationReport({ title: "", scene: { canvas: { width: 100, height: 100 }, nodes: [] } } as any);
+    expect(report.warnings.map((item) => item.code)).toContain("missing-task-title");
+  });
 });

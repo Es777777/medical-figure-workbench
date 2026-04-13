@@ -12,6 +12,7 @@ type Props = {
   exportLabel: string;
   exportPngLabel: string;
   exportSvgLabel: string;
+  exportAllTasksLabel: string;
   exportChecksLabel: string;
   warnings: ExportWarning[];
   onSaveProject: () => void;
@@ -20,6 +21,7 @@ type Props = {
   onOpenProjectFile: () => void;
   onExportPng: () => void;
   onExportSvg: () => void;
+  onExportAllTasks: () => void;
 };
 
 export function ExportCenter(props: Props) {
@@ -57,6 +59,9 @@ export function ExportCenter(props: Props) {
         </button>
         <button className="secondary-button" onClick={props.onExportSvg} type="button">
           {props.exportSvgLabel}
+        </button>
+        <button className="secondary-button" onClick={props.onExportAllTasks} type="button">
+          {props.exportAllTasksLabel}
         </button>
       </div>
 

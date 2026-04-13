@@ -34,5 +34,13 @@ export function getExportValidationReport(task: FigureTask) {
     });
   }
 
+  if (!task.title.trim()) {
+    warnings.push({
+      code: "missing-task-title",
+      severity: "notice",
+      message: "The current task does not have a clear title.",
+    });
+  }
+
   return { warnings };
 }
