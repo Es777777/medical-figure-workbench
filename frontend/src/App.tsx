@@ -16,9 +16,6 @@ import { UI_COPY, type Language } from "./copy";
 import { getElementLibrary, getLibraryCategories, getRecommendedLibraryItems, searchLibraryItems, type LibraryCategoryId } from "./element-library";
 import { EditorCanvas } from "./EditorCanvas";
 import { ExportCenter } from "./features/export/ExportCenter";
-import { buildProjectExportPayload } from "./features/export/export-utils";
-import { buildBatchTaskJsonExports, buildBatchTaskPngExports, buildBatchTaskSvgExports } from "./features/export/batch-export";
-import { buildTaskSvgExport } from "./features/export/svg-export";
 import { getExportValidationReport } from "./features/export/validation";
 import { ImageRefinementPanel } from "./features/editor/ImageRefinementPanel";
 import { ImportWorkbench } from "./features/import-session/ImportWorkbench";
@@ -31,6 +28,7 @@ import type { FigureProject } from "./features/project/types";
 import { SplitReviewPanel } from "./features/import-session/SplitReviewPanel";
 import { ResourceBrowser } from "./features/resources/ResourceBrowser";
 import { SemanticAssistantPanel } from "./features/semantic-assistant/SemanticAssistantPanel";
+import { buildBatchDownloads, buildProjectDownload, buildTaskJsonDownload, buildTaskSvgDownload, triggerBlobDownload } from "./state/export-store";
 import { createProjectState } from "./state/project-store";
 import { OnboardingCard } from "./features/onboarding/OnboardingCard";
 import {
@@ -1078,14 +1076,8 @@ export function App() {
   }
 
   function handleExportProjectFile() {
-    const payload = buildProjectExportPayload(project);
-    const blob = new Blob([payload.content], { type: payload.mimeType });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = payload.fileName;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const payload = buildProjectDownload(project);
+    triggerBlobDownload(payload);
   }
 
   function handleExportSvg() {
@@ -1093,62 +1085,28 @@ export function App() {
       return;
     }
 
-    const payload = buildTaskSvgExport(activeTask);
-    const blob = new Blob([payload.content], { type: payload.mimeType });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = payload.fileName;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const payload = buildTaskSvgDownload(activeTask);
+    triggerBlobDownload(payload);
   }
 
   function handleExportAllTasks() {
-    const payloads = buildBatchTaskJsonExports(project.tasks);
-    const content = JSON.stringify(payloads, null, 2);
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${project.id}-tasks.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const payloads = buildBatchDownloads(project).json;
+    triggerBlobDownload({ fileName: `${project.id}-tasks.json`, mimeType: "application/json", content: JSON.stringify(payloads, null, 2) });
   }
 
   function handleExportAllTaskJson() {
-    const payloads = buildBatchTaskJsonExports(project.tasks);
-    const content = JSON.stringify(payloads, null, 2);
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${project.id}-tasks-json.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const payloads = buildBatchDownloads(project).json;
+    triggerBlobDownload({ fileName: `${project.id}-tasks-json.json`, mimeType: "application/json", content: JSON.stringify(payloads, null, 2) });
   }
 
   function handleExportAllTaskSvg() {
-    const payloads = buildBatchTaskSvgExports(project.tasks);
-    const content = JSON.stringify(payloads, null, 2);
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${project.id}-tasks-svg.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const payloads = buildBatchDownloads(project).svg;
+    triggerBlobDownload({ fileName: `${project.id}-tasks-svg.json`, mimeType: "application/json", content: JSON.stringify(payloads, null, 2) });
   }
 
   function handleExportAllTaskPng() {
-    const payloads = buildBatchTaskPngExports(project.tasks);
-    const content = JSON.stringify(payloads, null, 2);
-    const blob = new Blob([content], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `${project.id}-tasks-png.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
+    const payloads = buildBatchDownloads(project).png;
+    triggerBlobDownload({ fileName: `${project.id}-tasks-png.json`, mimeType: "application/json", content: JSON.stringify(payloads, null, 2) });
   }
 
   function triggerProjectFilePicker() {
