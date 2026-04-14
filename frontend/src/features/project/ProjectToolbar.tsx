@@ -19,15 +19,17 @@ export function ProjectToolbar(props: Props) {
         <span>{props.titleLabel}</span>
         <input onChange={(event) => props.onTitleChange(event.target.value)} type="text" value={props.title} />
       </label>
-      <button className="secondary-button" onClick={props.onSaveProject} type="button">
-        {props.labels.saveProject}
-      </button>
-      <button className="secondary-button" onClick={props.onOpenProject} type="button">
-        {props.labels.loadProject}
-      </button>
-      <button className="primary-button" onClick={props.onCreateTask} type="button">
-        {props.labels.newTask}
-      </button>
+      <div className="project-toolbar-actions">
+        <button className="secondary-button" onClick={props.onSaveProject} type="button">
+          {props.labels.saveProject}
+        </button>
+        <button className="secondary-button" onClick={props.onOpenProject} type="button">
+          {props.labels.loadProject}
+        </button>
+        <button className="primary-button" onClick={props.onCreateTask} type="button">
+          {props.labels.newTask}
+        </button>
+      </div>
     </div>
   );
 }

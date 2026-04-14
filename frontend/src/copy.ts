@@ -42,6 +42,7 @@ type CopyBundle = {
     saveProjectFile: string;
     openProjectFile: string;
     newTask: string;
+    deleteTask: string;
     exportJson: string;
     exportPng: string;
     exportSvg: string;
@@ -139,7 +140,7 @@ type CopyBundle = {
     noReconstruction: string;
     noActions: string;
   };
-  nodeTypes: Record<"panel" | "image" | "text" | "arrow" | "group", string>;
+  nodeTypes: Record<"panel" | "image" | "text" | "arrow" | "shape" | "group", string>;
 };
 
 export const UI_COPY: Record<Language, CopyBundle> = {
@@ -185,6 +186,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       saveProjectFile: "Save project file",
       openProjectFile: "Open project file",
       newTask: "New task",
+      deleteTask: "Delete task",
       exportJson: "Export JSON",
       exportPng: "Export PNG",
       exportSvg: "Export SVG",
@@ -287,6 +289,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       image: "Image",
       text: "Text",
       arrow: "Arrow",
+      shape: "Shape",
       group: "Group",
     },
   },
@@ -332,6 +335,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       saveProjectFile: "保存项目文件",
       openProjectFile: "打开项目文件",
       newTask: "新建任务",
+      deleteTask: "删除任务",
       exportJson: "导出 JSON",
       exportPng: "导出 PNG",
       exportSvg: "导出 SVG",
@@ -434,6 +438,7 @@ export const UI_COPY: Record<Language, CopyBundle> = {
       image: "图片",
       text: "文字",
       arrow: "箭头",
+      shape: "图形",
       group: "分组",
     },
   },

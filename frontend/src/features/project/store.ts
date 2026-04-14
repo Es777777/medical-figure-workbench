@@ -17,6 +17,7 @@ export function createBlankTask(title = "Figure 1"): FigureTask {
     importMode: "auto",
     sourceDataUrl: "",
     sourceName: "",
+    importedSourcePreviewVisible: false,
     contextNotes: "",
     recommendedPrompt: "",
     mergedRecognizedText: "",
@@ -85,6 +86,39 @@ export function switchActiveTask(project: FigureProject, taskId: string): Figure
     ...project,
     currentTaskId: taskId,
     updatedAt: new Date().toISOString(),
+  };
+}
+
+export function moveTask(project: FigureProject, taskId: string, nextIndex: number): FigureProject {
+  const currentIndex = project.tasks.findIndex((task) => task.id === taskId);
+  if (currentIndex === -1 || nextIndex < 0 || nextIndex >= project.tasks.length) {
+    return project;
+  }
+
+  const tasks = [...project.tasks];
+  const [task] = tasks.splice(currentIndex, 1);
+  tasks.splice(nextIndex, 0, task);
+
+  return {
+    ...project,
+    updatedAt: new Date().toISOString(),
+    tasks,
+  };
+}
+
+export function deleteTask(project: FigureProject, taskId: string): FigureProject {
+  if (project.tasks.length <= 1) {
+    return project;
+  }
+
+  const tasks = project.tasks.filter((task) => task.id !== taskId);
+  const currentTaskId = project.currentTaskId === taskId ? tasks[0]!.id : project.currentTaskId;
+
+  return {
+    ...project,
+    updatedAt: new Date().toISOString(),
+    currentTaskId,
+    tasks,
   };
 }
 

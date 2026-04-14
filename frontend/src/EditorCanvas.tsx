@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
-import { Canvas, FabricImage, Group, Line, Rect, Textbox, Triangle, type FabricObject } from "fabric";
+import { Canvas, Ellipse, FabricImage, Group, Line, Polygon, Rect, Textbox, Triangle, type FabricObject } from "fabric";
 
 import type { PlannerTargetRef } from "@shared/api-contracts";
-import type { ArrowNode, ImageNode, PanelNode, SceneGraph, SceneNode, TextNode } from "@shared/scene-graph";
+import type { ArrowNode, ImageNode, PanelNode, SceneGraph, SceneNode, ShapeNode, TextNode } from "@shared/scene-graph";
 
 import { resolveAssetUrl } from "./api";
 import { sortNodesByZIndex, updateNodeById } from "./scene-data";
@@ -33,6 +33,35 @@ interface CanvasPalette {
   selection: string;
   selectionSoft: string;
 }
+
+type CanvasRenderFailure = {
+  nodeId: string;
+  nodeType: SceneNode["type"];
+  reason: string;
+};
+
+type CanvasDebugSnapshot = {
+  nodeCount: number;
+  renderedNodeIds: string[];
+  failedNodes: CanvasRenderFailure[];
+  viewScale: number;
+  canvasWidth: number;
+  canvasHeight: number;
+};
+
+type DebugGlobal = typeof globalThis & {
+  __OCR_SVG_EDITOR_CANVAS__?: Canvas | null;
+  __OCR_SVG_EDITOR_CANVAS_DEBUG__?: CanvasDebugSnapshot | null;
+};
+
+type ImageGroupObject = Group & {
+  data?: {
+    nodeId?: string;
+    imagePlaceholderObject?: FabricObject;
+    imageFrameObject?: FabricObject;
+    imageTitleObject?: FabricObject;
+  };
+};
 
 const tokenFallbacks: Record<keyof CanvasPalette, string> = {
   canvasBackground: "#ffffff",
@@ -65,6 +94,16 @@ function getCanvasPalette(): CanvasPalette {
   };
 }
 
+function updateCanvasDebugSnapshot(canvas: Canvas | null, snapshot: CanvasDebugSnapshot | null) {
+  if (!import.meta.env.DEV) {
+    return;
+  }
+
+  const debugGlobal = globalThis as DebugGlobal;
+  debugGlobal.__OCR_SVG_EDITOR_CANVAS__ = canvas;
+  debugGlobal.__OCR_SVG_EDITOR_CANVAS_DEBUG__ = snapshot;
+}
+
 function syncCanvasViewport(canvas: Canvas, width: number, height: number, viewScale: number, backgroundColor: string) {
   canvas.setDimensions({
     width: Math.round(width * viewScale),
@@ -93,6 +132,7 @@ function applyInteractionStyle(
     dimmed?: boolean;
   },
 ): FabricObject {
+  const existingData = (object as CanvasNodeObject).data ?? {};
   object.set({
     selectable: !node.locked && !node.hidden,
     evented: !node.locked && !node.hidden,
@@ -107,6 +147,7 @@ function applyInteractionStyle(
     opacity: options?.dimmed ? 0.16 : 1,
     shadow: options?.highlighted ? `0 0 18px ${palette.selectionSoft}` : undefined,
     data: {
+      ...existingData,
       nodeId: node.id,
     },
   });
@@ -158,7 +199,7 @@ function createTextObject(node: TextNode, palette: CanvasPalette, highlighted: b
   );
 }
 
-async function createImageObject(node: ImageNode, palette: CanvasPalette, highlighted: boolean, dimmed: boolean): Promise<FabricObject> {
+function createImageObject(node: ImageNode, palette: CanvasPalette, highlighted: boolean, dimmed: boolean): FabricObject {
   const frame = new Rect({
     left: 0,
     top: 0,
@@ -181,9 +222,44 @@ async function createImageObject(node: ImageNode, palette: CanvasPalette, highli
     editable: false,
   });
 
-  let imageObject: FabricObject;
+  const imageObject = new Textbox(node.name ?? "Loading image", {
+    left: 12,
+    top: Math.max(node.transform.height / 2 - 14, 28),
+    width: Math.max(node.transform.width - 24, 40),
+    fontFamily: "Trebuchet MS",
+    fontSize: 13,
+    fill: palette.imageLabel,
+    editable: false,
+    textAlign: "center",
+    opacity: 0.72,
+  });
+
+  const group = new Group([frame, imageObject, title], {
+    left: node.transform.x,
+    top: node.transform.y,
+  }) as ImageGroupObject;
+  group.data = {
+    ...group.data,
+    imagePlaceholderObject: imageObject,
+    imageFrameObject: frame,
+    imageTitleObject: title,
+  };
+
+  return applyInteractionStyle(group, node, palette, { allowResize: true, highlighted, dimmed });
+}
+
+async function hydrateImageObject(
+  group: ImageGroupObject,
+  node: ImageNode,
+  canvas: Canvas,
+  cancelledRef: { current: boolean },
+) {
   try {
     const loadedImage = await FabricImage.fromURL(resolveAssetUrl(node.asset.uri));
+    if (cancelledRef.current) {
+      return;
+    }
+
     const contentWidth = node.crop?.width ?? node.transform.width;
     const contentHeight = node.crop?.height ?? node.transform.height;
     const contentX = node.crop?.x ?? 0;
@@ -191,37 +267,67 @@ async function createImageObject(node: ImageNode, palette: CanvasPalette, highli
     const safeWidth = loadedImage.width ?? 1;
     const safeHeight = loadedImage.height ?? 1;
     const fitScale = Math.min(contentWidth / safeWidth, contentHeight / safeHeight);
+    const renderedWidth = safeWidth * fitScale;
+    const renderedHeight = safeHeight * fitScale;
+    const offsetX = Math.max((contentWidth - renderedWidth) / 2, 0);
+    const offsetY = Math.max((contentHeight - renderedHeight) / 2, 0);
+    const groupLeft = group.left ?? node.transform.x;
+    const groupTop = group.top ?? node.transform.y;
 
     loadedImage.set({
-      left: contentX,
-      top: contentY,
+      left: groupLeft + contentX + offsetX,
+      top: groupTop + contentY + offsetY,
       scaleX: fitScale,
       scaleY: fitScale,
       selectable: false,
       evented: false,
     });
-    imageObject = loadedImage;
-  } catch {
-    imageObject = new Textbox(node.asset.uri, {
-      left: 12,
-      top: Math.max(node.transform.height - 44, 28),
-      width: Math.max(node.transform.width - 24, 40),
-      fontFamily: "Trebuchet MS",
-      fontSize: 11,
-      fill: palette.imageLabel,
-      editable: false,
-    });
-  }
 
-  return applyInteractionStyle(
-    new Group([frame, imageObject, title], {
-      left: node.transform.x,
-      top: node.transform.y,
-    }),
-    node,
-    palette,
-    { allowResize: true, highlighted, dimmed },
-  );
+    const placeholder = group.data?.imagePlaceholderObject;
+    if (placeholder) {
+      group.remove(placeholder);
+    }
+    const title = group.data?.imageTitleObject;
+    if (title) {
+      group.remove(title);
+    }
+    const frame = group.data?.imageFrameObject;
+    if (frame instanceof Rect) {
+      frame.set({
+        fill: "rgba(255,255,255,0)",
+        stroke: "rgba(255,255,255,0)",
+      });
+    }
+    group.insertAt(1, loadedImage);
+    group.data = {
+      ...group.data,
+      imagePlaceholderObject: undefined,
+      imageTitleObject: undefined,
+    };
+    group.set("dirty", true);
+    group.setCoords();
+    canvas.requestRenderAll();
+  } catch {
+    if (cancelledRef.current) {
+      return;
+    }
+
+    const fallback = group.data?.imagePlaceholderObject;
+    if (fallback instanceof Textbox) {
+      fallback.set({
+        text: node.asset.uri,
+        left: 12,
+        top: Math.max(node.transform.height - 44, 28),
+        width: Math.max(node.transform.width - 24, 40),
+        fontSize: 11,
+        textAlign: "left",
+        opacity: 1,
+      });
+      group.set("dirty", true);
+      group.setCoords();
+      canvas.requestRenderAll();
+    }
+  }
 }
 
 function createArrowObject(node: ArrowNode, palette: CanvasPalette, highlighted: boolean, dimmed: boolean): FabricObject {
@@ -308,11 +414,55 @@ function createArrowObject(node: ArrowNode, palette: CanvasPalette, highlighted:
   );
 }
 
-async function createNodeObject(
+function createShapeObject(node: ShapeNode, palette: CanvasPalette, highlighted: boolean, dimmed: boolean): FabricObject {
+  const sharedProps = {
+    left: node.transform.x,
+    top: node.transform.y,
+    fill: node.style.fill,
+    stroke: highlighted ? palette.selection : node.style.stroke,
+    strokeWidth: (node.style.strokeWidth ?? 3) + (highlighted ? 1.5 : 0),
+    strokeDashArray: node.style.dashArray,
+  };
+
+  const baseObject =
+    node.shape === "ellipse"
+      ? new Ellipse({
+          ...sharedProps,
+          rx: Math.max(node.transform.width / 2, 1),
+          ry: Math.max(node.transform.height / 2, 1),
+        })
+      : node.shape === "diamond"
+        ? new Polygon(
+            [
+              { x: node.transform.width / 2, y: 0 },
+              { x: node.transform.width, y: node.transform.height / 2 },
+              { x: node.transform.width / 2, y: node.transform.height },
+              { x: 0, y: node.transform.height / 2 },
+            ],
+            {
+              ...sharedProps,
+            },
+          )
+        : new Rect({
+            ...sharedProps,
+            width: node.transform.width,
+            height: node.transform.height,
+            rx: 18,
+            ry: 18,
+          });
+
+  return applyInteractionStyle(baseObject, node, palette, {
+    allowResize: true,
+    highlighted,
+    dimmed,
+  });
+}
+
+function createNodeObject(
   node: SceneNode,
   palette: CanvasPalette,
   highlightTargets: PlannerTargetRef[],
-): Promise<FabricObject | null> {
+): FabricObject | null {
   const highlighted = matchesHighlight(node, highlightTargets);
   const dimmed = highlightTargets.length > 0 && !highlighted;
   switch (node.type) {
@@ -324,6 +474,8 @@ async function createNodeObject(
       return createTextObject(node, palette, highlighted, dimmed);
     case "arrow":
       return createArrowObject(node, palette, highlighted, dimmed);
+    case "shape":
+      return createShapeObject(node, palette, highlighted, dimmed);
     case "group":
       return null;
     default:
@@ -389,11 +541,21 @@ export function EditorCanvas({ scene, selectedNodeId, highlightTargets, onSelect
   const canvasRef = useRef<Canvas | null>(null);
   const objectMapRef = useRef<Map<string, FabricObject>>(new Map());
   const sceneRef = useRef(scene);
+  const onSelectNodeRef = useRef(onSelectNode);
+  const onSceneChangeRef = useRef(onSceneChange);
   const isProgrammaticSelectionRef = useRef(false);
 
   useEffect(() => {
     sceneRef.current = scene;
   }, [scene]);
+
+  useEffect(() => {
+    onSelectNodeRef.current = onSelectNode;
+  }, [onSelectNode]);
+
+  useEffect(() => {
+    onSceneChangeRef.current = onSceneChange;
+  }, [onSceneChange]);
 
   useEffect(() => {
     if (!canvasElementRef.current) {
@@ -414,7 +576,7 @@ export function EditorCanvas({ scene, selectedNodeId, highlightTargets, onSelect
       }
       const activeObject = canvas.getActiveObject() as CanvasNodeObject | undefined;
       const nodeId = activeObject?.data?.nodeId;
-      onSelectNode(typeof nodeId === "string" ? nodeId : null);
+      onSelectNodeRef.current(typeof nodeId === "string" ? nodeId : null);
     };
 
     canvas.on("selection:created", syncSelection);
@@ -423,7 +585,7 @@ export function EditorCanvas({ scene, selectedNodeId, highlightTargets, onSelect
       if (isProgrammaticSelectionRef.current) {
         return;
       }
-      onSelectNode(null);
+      onSelectNodeRef.current(null);
     });
     canvas.on("object:modified", (event) => {
       const target = event.target as CanvasNodeObject | undefined;
@@ -432,18 +594,37 @@ export function EditorCanvas({ scene, selectedNodeId, highlightTargets, onSelect
         return;
       }
 
-      onSceneChange(syncNodeFromObject(sceneRef.current, nodeId, target));
+      onSceneChangeRef.current(syncNodeFromObject(sceneRef.current, nodeId, target));
     });
 
     canvasRef.current = canvas;
     syncCanvasViewport(canvas, scene.canvas.width, scene.canvas.height, viewScale, getCanvasPalette().canvasBackground);
+    updateCanvasDebugSnapshot(canvas, {
+      nodeCount: scene.nodes.length,
+      renderedNodeIds: [],
+      failedNodes: [],
+      viewScale,
+      canvasWidth: Math.round(scene.canvas.width * viewScale),
+      canvasHeight: Math.round(scene.canvas.height * viewScale),
+    });
 
     return () => {
       canvas.dispose();
       canvasRef.current = null;
       objectMapRef.current.clear();
+      updateCanvasDebugSnapshot(null, null);
     };
-  }, [onSceneChange, onSelectNode, scene.canvas.height, scene.canvas.width, viewScale]);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const palette = getCanvasPalette();
+    syncCanvasViewport(canvas, scene.canvas.width, scene.canvas.height, viewScale, scene.canvas.backgroundColor ?? palette.canvasBackground);
+  }, [scene.canvas.backgroundColor, scene.canvas.height, scene.canvas.width, viewScale]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -452,53 +633,86 @@ export function EditorCanvas({ scene, selectedNodeId, highlightTargets, onSelect
     }
 
     let cancelled = false;
+    const cancelledRef = { current: false };
 
     const palette = getCanvasPalette();
     objectMapRef.current.clear();
     isProgrammaticSelectionRef.current = true;
     canvas.clear();
     syncCanvasViewport(canvas, scene.canvas.width, scene.canvas.height, viewScale, scene.canvas.backgroundColor ?? palette.canvasBackground);
+    const failedNodes: CanvasRenderFailure[] = [];
+    const renderedNodeIds: string[] = [];
+    const previousRenderOnAddRemove = canvas.renderOnAddRemove;
+    canvas.renderOnAddRemove = false;
 
-    void (async () => {
+    try {
       for (const node of sortNodesByZIndex(scene.nodes)) {
         if (cancelled || node.hidden) {
           continue;
         }
 
-        const object = await createNodeObject(node, palette, highlightTargets);
-        if (cancelled || !object) {
-          continue;
-        }
+        let object: FabricObject | null = null;
+        try {
+          object = createNodeObject(node, palette, highlightTargets);
+          if (!object) {
+            continue;
+          }
 
-        object.setCoords();
-        objectMapRef.current.set(node.id, object);
-        canvas.add(object);
+          object.setCoords();
+          objectMapRef.current.set(node.id, object);
+          canvas.add(object);
+          renderedNodeIds.push(node.id);
 
-        if (selectedNodeId === node.id) {
-          canvas.setActiveObject(object);
+          if (node.type === "image" && object instanceof Group) {
+            void hydrateImageObject(object as ImageGroupObject, node, canvas, cancelledRef);
+          }
+
+          if (selectedNodeId === node.id) {
+            canvas.setActiveObject(object);
+          }
+        } catch (error) {
+          const reason = error instanceof Error ? error.message : "Unknown canvas render failure";
+          failedNodes.push({
+            nodeId: node.id,
+            nodeType: node.type,
+            reason,
+          });
+          if (import.meta.env.DEV) {
+            console.error("[EditorCanvas] Failed to render scene node", { nodeId: node.id, nodeType: node.type, reason, error });
+          }
         }
       }
 
-      if (cancelled) {
-        return;
-      }
-
-      if (selectedNodeId) {
+      if (!cancelled && selectedNodeId) {
         const activeObject = objectMapRef.current.get(selectedNodeId);
         if (activeObject) {
           activeObject.setCoords();
           canvas.setActiveObject(activeObject);
         }
       }
+    } finally {
+      canvas.renderOnAddRemove = previousRenderOnAddRemove;
+    }
+
+    if (!cancelled) {
+      updateCanvasDebugSnapshot(canvas, {
+        nodeCount: scene.nodes.length,
+        renderedNodeIds,
+        failedNodes,
+        viewScale,
+        canvasWidth: Math.round(scene.canvas.width * viewScale),
+        canvasHeight: Math.round(scene.canvas.height * viewScale),
+      });
 
       canvas.renderAll();
       queueMicrotask(() => {
         isProgrammaticSelectionRef.current = false;
       });
-    })();
+    }
 
     return () => {
       cancelled = true;
+      cancelledRef.current = true;
       isProgrammaticSelectionRef.current = false;
     };
   }, [highlightTargets, scene, selectedNodeId, viewScale]);

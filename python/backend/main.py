@@ -24,6 +24,8 @@ from .models import (
     ExportSceneRequestModel,
     ExportSceneResponseModel,
     HealthResponseModel,
+    ImportExternalResourceRequestModel,
+    ImportExternalResourceResponseModel,
     NormalizeAssetRequestModel,
     NormalizeAssetResponseModel,
     NormalizeAssetSourceModel,
@@ -32,10 +34,12 @@ from .models import (
     RegenerateNodeRequestModel,
     RegenerateNodeResponseModel,
     RegenerateNodeVariantModel,
+    ExternalResourceSearchResponseModel,
     ValidationIssueModel,
 )
 from .prompt_analysis import analyze_prompt
 from .reconstruction import reconstruct_figure
+from .resource_library import import_external_resource, search_external_resources
 from .store import DocumentRecord, store
 from ..image_normalize import NormalizationError, normalize_to_png
 
@@ -148,6 +152,19 @@ async def unexpected_error_handler(_: Request, exc: Exception) -> JSONResponse:
 @app.get("/healthz", response_model=HealthResponseModel)
 def healthz() -> HealthResponseModel:
     return HealthResponseModel(status="ok")
+
+
+@app.get("/resource-search", response_model=ExternalResourceSearchResponseModel)
+def resource_search(query: str, limit: int = 12) -> ExternalResourceSearchResponseModel:
+    safe_limit = max(min(limit, 24), 1)
+    items, warnings = search_external_resources(query=query, limit=safe_limit)
+    return ExternalResourceSearchResponseModel(query=query, items=items, warnings=warnings)
+
+
+@app.post("/resource-import", response_model=ImportExternalResourceResponseModel)
+def resource_import(payload: ImportExternalResourceRequestModel) -> ImportExternalResourceResponseModel:
+    imported = import_external_resource(payload.item.model_dump(), ASSETS_STATIC_DIR)
+    return ImportExternalResourceResponseModel(requestId=payload.requestId, **imported)
 
 
 @app.post("/normalize-asset", response_model=NormalizeAssetResponseModel)

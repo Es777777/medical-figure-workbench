@@ -62,4 +62,24 @@ describe("task SVG export", () => {
     expect(result.content).toContain("<line");
     expect(result.content).toContain('x1="10"');
   });
+
+  it("includes shape output in SVG", () => {
+    const result = buildTaskSvgExport({
+      id: "task_4",
+      title: "Figure 4",
+      scene: {
+        canvas: { width: 1200, height: 800 },
+        nodes: [
+          {
+            type: "shape",
+            shape: "diamond",
+            transform: { x: 80, y: 120, width: 140, height: 140 },
+            style: { fill: "#d9efe9", stroke: "#0c8f8a", strokeWidth: 3 },
+          },
+        ],
+      },
+    } as any);
+    expect(result.content).toContain("<polygon");
+    expect(result.content).toContain("#0c8f8a");
+  });
 });

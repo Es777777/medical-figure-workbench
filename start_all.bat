@@ -57,11 +57,21 @@ if not defined BACKEND_READY (
   exit /b 1
 )
 
+echo Installing frontend dependencies if needed...
+if not exist "%FRONTEND_DIR%\node_modules" (
+  call npm --prefix "%FRONTEND_DIR%" install
+  if errorlevel 1 (
+    echo Frontend dependency installation failed.
+    pause
+    exit /b 1
+  )
+)
+
 echo Checking whether frontend is already running...
 powershell -NoProfile -Command "try { $r = Invoke-WebRequest -UseBasicParsing '%FRONTEND_URL%' -TimeoutSec 2; if ($r.StatusCode -ge 200) { exit 0 } else { exit 1 } } catch { exit 1 }"
 if errorlevel 1 (
   echo Starting frontend on %BACKEND_HOST%:%FRONTEND_PORT% ...
-  start "OCR SVG Builder Frontend" cmd /k "cd /d "%FRONTEND_DIR%" && if not exist node_modules npm install && set VITE_API_BASE_URL=http://%BACKEND_HOST%:%BACKEND_PORT%&& npm run dev -- --host %BACKEND_HOST% --port %FRONTEND_PORT%"
+  start "OCR SVG Builder Frontend" cmd /k "cd /d "%FRONTEND_DIR%" && set "VITE_API_BASE_URL=http://%BACKEND_HOST%:%BACKEND_PORT%" && npm run dev -- --host %BACKEND_HOST% --port %FRONTEND_PORT%"
 ) else (
   echo Frontend already reachable at %FRONTEND_URL%
 )

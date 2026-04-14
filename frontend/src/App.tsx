@@ -9,9 +9,18 @@ import type {
   RegenerateNodeResponse,
   RegenerateNodeVariant,
 } from "@shared/api-contracts";
-import type { SceneGraph, SceneNode } from "@shared/scene-graph";
+import type { SceneGraph, SceneNode, ShapeKind } from "@shared/scene-graph";
 
-import { requestAnalyzeAsset, requestAnalyzePrompt, requestReconstructFigure, requestRegenerateNode, resolveAssetUrl } from "./api";
+import {
+  requestAnalyzeAsset,
+  requestAnalyzePrompt,
+  requestImportExternalResource,
+  requestReconstructFigure,
+  requestRegenerateNode,
+  requestSearchExternalResources,
+  resolveAssetUrl,
+  type ExternalResourceItem,
+} from "./api";
 import { UI_COPY, type Language } from "./copy";
 import { getElementLibrary, getLibraryCategories, getRecommendedLibraryItems, searchLibraryItems, type LibraryCategoryId } from "./element-library";
 import { EditorCanvas } from "./EditorCanvas";
@@ -22,7 +31,7 @@ import { ImportWorkbench } from "./features/import-session/ImportWorkbench";
 import { createImportSession, getKeptPanelIds, setImportMode as applyImportMode, setPanelDecision as applyPanelDecision } from "./features/import-session/state";
 import type { ImportMode, ImportSession } from "./features/import-session/types";
 import { ProjectToolbar } from "./features/project/ProjectToolbar";
-import { createProject, createTask, deserializeProject, serializeProject, switchActiveTask, updateTask } from "./features/project/store";
+import { createProject, createTask, deleteTask, deserializeProject, moveTask, serializeProject, switchActiveTask, updateTask } from "./features/project/store";
 import { TaskListPanel } from "./features/project/TaskListPanel";
 import type { FigureProject } from "./features/project/types";
 import { SplitReviewPanel } from "./features/import-session/SplitReviewPanel";
@@ -36,7 +45,6 @@ import {
   analyzeFigureFile,
   buildRecommendedPromptFromSemantics,
   insertSingleFigurePanelIntoScene,
-  insertBackendDraftsIntoScene,
   insertFigurePanelsIntoScene,
   type FigureWorkbenchAnalysis,
 } from "./figure-workbench";
@@ -49,10 +57,17 @@ import {
   describeNode,
   getInitialSelectionId,
   isImageNode,
+  isShapeNode,
   isTextNode,
+  insertArrowNode,
+  insertImageNode,
+  insertPanelNode,
+  insertShapeNode,
+  insertTextNode,
   loadInitialComposeRequest,
   makeRequestId,
   moveNodeInStack,
+  deleteNode as deleteSceneNode,
   setNodeZIndex,
   sortNodesByZIndex,
   rebuildSceneFromReconstruction,
@@ -128,11 +143,24 @@ type FigureWorkbenchState = {
   status: "idle" | "loading" | "ready" | "error";
   contextNotes: string;
   analysis: FigureWorkbenchAnalysis | null;
+  ocrProgress: {
+    completed: number;
+    total: number;
+  } | null;
   recommendedPrompt: string;
   semanticStatus: "idle" | "loading" | "done";
   semanticMode: "live" | "fallback" | null;
   semanticMessage: string;
   error: string;
+};
+
+type ExternalResourceState = {
+  status: "idle" | "loading" | "done" | "error";
+  mode: "live" | "fallback" | null;
+  message: string;
+  items: ExternalResourceItem[];
+  warnings: string[];
+  importingId: string | null;
 };
 
 type MedicalResourceCard = {
@@ -187,11 +215,21 @@ const initialFigureWorkbenchState: FigureWorkbenchState = {
   status: "idle",
   contextNotes: "Sepsis mechanism figure with panel splits, organ injury progression, and clinically readable labels.",
   analysis: null,
+  ocrProgress: null,
   recommendedPrompt: "",
   semanticStatus: "idle",
   semanticMode: null,
   semanticMessage: "",
   error: "",
+};
+
+const initialExternalResourceState: ExternalResourceState = {
+  status: "idle",
+  mode: null,
+  message: "",
+  items: [],
+  warnings: [],
+  importingId: null,
 };
 
 const PROJECT_STORAGE_KEY = "medical-figure-workbench:project";
@@ -345,6 +383,77 @@ function clampCanvasScale(value: number): number {
   return Math.min(Math.max(Math.round(value * 100) / 100, MIN_CANVAS_SCALE), MAX_CANVAS_SCALE);
 }
 
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        reject(new Error(`Could not decode ${file.name}`));
+        return;
+      }
+
+      resolve(reader.result);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImageDimensions(source: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () =>
+      resolve({
+        width: image.naturalWidth || image.width || 1,
+        height: image.naturalHeight || image.height || 1,
+      });
+    image.onerror = () => reject(new Error("Could not decode the selected image."));
+    image.src = source;
+  });
+}
+
+function buildPanelDecisions(
+  panels: Array<{ id: string; label: string }>,
+  existingPanels?: Array<{ id: string; decision: "pending" | "keep" | "ignore" }>,
+) {
+  return panels.map((panel) => ({
+    id: panel.id,
+    label: panel.label,
+    decision: existingPanels?.find((item) => item.id === panel.id)?.decision ?? "pending",
+  }));
+}
+
+function buildFigureAnalysisStatusMessage(
+  language: Language,
+  fallback: string,
+  panelCount: number,
+  progress: {
+    completed: number;
+    total: number;
+  } | null,
+): string {
+  if (!progress || panelCount <= 0) {
+    return fallback;
+  }
+
+  return language === "zh-CN"
+    ? `已检测到 ${panelCount} 个分图，正在继续识别文字（${progress.completed}/${progress.total}）。现在可以先预览或导入。`
+    : `Detected ${panelCount} split panels. OCR is still running (${progress.completed}/${progress.total}), but you can already preview or import them.`;
+}
+
+function formatTaskTimestamp(timestamp: string, language: Language): string {
+  try {
+    return new Intl.DateTimeFormat(language === "zh-CN" ? "zh-CN" : "en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(timestamp));
+  } catch {
+    return timestamp;
+  }
+}
+
 function formatNumericFieldValue(node: SceneNode, field: NumericField): string {
   if (field === "zIndex") {
     return String(node.zIndex);
@@ -417,6 +526,59 @@ function getRegenerateSummary(language: Language, state: RegenerateState): strin
     return state.mode === "live" ? copy.messages.liveLoaded : copy.messages.mockLoaded;
   }
   return copy.messages.noRegenerateRequest;
+}
+
+function buildEmptyWorkbenchScene(sourceDataUrl: string, fileName: string, includePreview = true): SceneGraph {
+  const now = new Date().toISOString();
+  return {
+    id: `scene_${Date.now()}`,
+    version: 1,
+    kind: "scientific-figure",
+    canvas: {
+      width: 1440,
+      height: 960,
+      backgroundColor: "#ffffff",
+    },
+    source: {
+      assetId: `src_${Date.now()}`,
+      originalUri: sourceDataUrl,
+      normalizedUri: sourceDataUrl,
+      originalDetectedFormat: "png",
+      normalizedMimeType: "image/png",
+      width: 1440,
+      height: 960,
+    },
+    nodes: includePreview
+      ? [
+          {
+            id: `source_preview_${Date.now()}`,
+            type: "image",
+            name: fileName,
+            zIndex: 10,
+            transform: { x: 120, y: 120, width: 1200, height: 720 },
+            bbox: { x: 120, y: 120, width: 1200, height: 720 },
+            createdAt: now,
+            updatedAt: now,
+            asset: {
+              assetId: `asset_source_${Date.now()}`,
+              uri: sourceDataUrl,
+              mimeType: "image/png",
+              width: 1200,
+              height: 720,
+              sourceKind: "upload",
+            },
+            editableMode: {
+              move: true,
+              resize: true,
+              crop: true,
+              regenerate: true,
+              replaceAsset: true,
+            },
+            tags: ["source-preview"],
+          },
+        ]
+      : [],
+  };
 }
 
 function normalizeSearchToken(value: string | undefined): string {
@@ -557,10 +719,13 @@ export function App() {
   const [flowInput, setFlowInput] = useState<string>("感染\n炎症\n器官损伤\n修复");
   const [libraryQuery, setLibraryQuery] = useState<string>("");
   const [libraryCategory, setLibraryCategory] = useState<LibraryCategoryId | "all">("all");
+  const [externalResourceState, setExternalResourceState] = useState<ExternalResourceState>(initialExternalResourceState);
   const [focusedTargets, setFocusedTargets] = useState<PlannerTargetRef[]>([]);
   const [targetLocalization, setTargetLocalization] = useState<TargetLocalizationState | null>(null);
   const regenerateRequestIdRef = useRef<string | null>(null);
+  const figureAnalysisRunIdRef = useRef(0);
   const canvasViewportRef = useRef<HTMLDivElement | null>(null);
+  const canvasImageInputRef = useRef<HTMLInputElement | null>(null);
   const figureFileInputRef = useRef<HTMLInputElement | null>(null);
   const projectFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -596,6 +761,54 @@ export function App() {
       decision: decisionMap.get(panel.id) ?? "pending",
     }));
   }, [figureWorkbenchState.analysis, importSession]);
+  const quickToolCopy = language === "zh-CN"
+    ? {
+        insertLocalImage: "插入本地图片",
+        quickTools: "快速工具",
+        quickToolsHint: "直接新建面板、文本、箭头和基础图形，不用先跑识别流程。",
+        addPanel: "新建面板",
+        addText: "新建文本",
+        addArrow: "新建箭头",
+        addEllipse: "新建椭圆",
+        addDiamond: "新建菱形",
+        deleteSelected: "删除当前元素",
+        dragTask: "拖动排序",
+      }
+    : {
+        insertLocalImage: "Insert local image",
+        quickTools: "Quick tools",
+        quickToolsHint: "Create panels, labels, arrows, and basic shapes directly without running figure analysis first.",
+        addPanel: "Add panel",
+        addText: "Add label",
+        addArrow: "Add arrow",
+        addEllipse: "Add ellipse",
+        addDiamond: "Add diamond",
+        deleteSelected: "Delete selected",
+        dragTask: "Drag to sort",
+      };
+  const externalResourceCopy = language === "zh-CN"
+    ? {
+        title: "联网医学资源",
+        hint: "输入至少 2 个字符后，会同时搜索 Servier、Bioicons、CDC PHIL 和 Wikimedia Commons。",
+        idle: "输入关键词后即可联网抓取资源。",
+        loading: "正在联网抓取外部资源...",
+        empty: "没有找到更合适的外部资源，可以换个关键词试试。",
+        importLabel: "导入到画布",
+        importingLabel: "导入中...",
+        sourceLabel: "打开来源",
+        warningLabel: "抓取提示",
+      }
+    : {
+        title: "Online Medical Resources",
+        hint: "Type at least 2 characters to search Servier, Bioicons, CDC PHIL, and Wikimedia Commons.",
+        idle: "Start typing to search connected resource libraries.",
+        loading: "Searching connected libraries...",
+        empty: "No stronger external matches found yet. Try a different keyword.",
+        importLabel: "Import to canvas",
+        importingLabel: "Importing...",
+        sourceLabel: "Open source",
+        warningLabel: "Crawler note",
+      };
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -608,7 +821,19 @@ export function App() {
       return;
     }
 
-    setScene(activeTask.scene ?? bootstrap.scene);
+    const nextScene = activeTask.scene ?? bootstrap.scene;
+    if (!nextScene) {
+      return;
+    }
+
+    setScene(nextScene);
+    setSelectedNodeId((currentSelectedId) => {
+      if (nextScene.nodes.some((node) => node.id === currentSelectedId)) {
+        return currentSelectedId;
+      }
+
+      return getInitialSelectionId(nextScene);
+    });
     setImportSession(
       activeTask.sourceName || activeTask.panelDecisions.length > 0
         ? {
@@ -620,9 +845,12 @@ export function App() {
     );
     setFigureWorkbenchState((currentState) => ({
       ...currentState,
+      status: activeTask.analysis ? "ready" : "idle",
       contextNotes: activeTask.contextNotes || currentState.contextNotes,
       analysis: activeTask.analysis,
+      ocrProgress: null,
       recommendedPrompt: activeTask.recommendedPrompt,
+      error: "",
     }));
     setAnalyzeState((currentState) => ({
       ...currentState,
@@ -641,6 +869,51 @@ export function App() {
       ...activeTask.regenerateState,
     }));
   }, [activeTask, bootstrap.scene]);
+
+  useEffect(() => {
+    const query = libraryQuery.trim();
+    if (query.length < 2) {
+      setExternalResourceState((currentState) => ({
+        ...currentState,
+        status: "idle",
+        mode: null,
+        message: "",
+        items: [],
+        warnings: [],
+      }));
+      return;
+    }
+
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setExternalResourceState((currentState) => ({
+        ...currentState,
+        status: "loading",
+        mode: null,
+        message: "",
+        warnings: [],
+      }));
+
+      const result = await requestSearchExternalResources(query, 12);
+      if (cancelled) {
+        return;
+      }
+
+      setExternalResourceState((currentState) => ({
+        ...currentState,
+        status: result.mode === "live" ? "done" : "error",
+        mode: result.mode,
+        message: result.message,
+        items: result.response.items,
+        warnings: result.response.warnings,
+      }));
+    }, 320);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [libraryQuery]);
 
   useEffect(() => {
     setNumericDrafts(selectedNode ? buildNumericDraftState(selectedNode) : null);
@@ -719,8 +992,31 @@ export function App() {
     };
   }, [canvasScale, scene, targetLocalization]);
 
+  function commitScene(nextScene: SceneGraph, status: FigureProject["tasks"][number]["status"] = "editing") {
+    setScene(nextScene);
+    setProject((currentProject) => updateTask(currentProject, currentProject.currentTaskId, { scene: nextScene, status }));
+  }
+
+  function resetCanvasFocus() {
+    setFocusedTargets([]);
+    setTargetLocalization(null);
+  }
+
+  function updateSceneSelection(nextSelectedNodeId: string | null) {
+    setSelectedNodeId(nextSelectedNodeId);
+    resetCanvasFocus();
+  }
+
+  function handleCanvasSceneChange(nextScene: SceneGraph) {
+    commitScene(nextScene);
+  }
+
   function updateSceneNode(nodeId: string, updater: (node: SceneNode) => SceneNode) {
-    setScene((currentScene) => (currentScene ? updateNodeById(currentScene, nodeId, updater) : currentScene));
+    if (!scene) {
+      return;
+    }
+
+    commitScene(updateNodeById(scene, nodeId, updater));
   }
 
   function resetNumericDrafts() {
@@ -765,7 +1061,9 @@ export function App() {
         return;
       }
 
-      setScene((currentScene) => (currentScene ? setNodeZIndex(currentScene, selectedNode.id, parsedValue) : currentScene));
+      if (scene) {
+        commitScene(setNodeZIndex(scene, selectedNode.id, parsedValue));
+      }
       return;
     }
 
@@ -774,7 +1072,9 @@ export function App() {
       return;
     }
 
-    setScene((currentScene) => (currentScene ? updateNodeGeometry(currentScene, selectedNode.id, { [field]: parsedValue }) : currentScene));
+    if (scene) {
+      commitScene(updateNodeGeometry(scene, selectedNode.id, { [field]: parsedValue }));
+    }
   }
 
   function handleNumericFieldKeyDown(field: NumericField, event: KeyboardEvent<HTMLInputElement>) {
@@ -806,11 +1106,11 @@ export function App() {
   }
 
   function handleLayerMove(direction: "forward" | "backward") {
-    if (!selectedNode) {
+    if (!scene || !selectedNode) {
       return;
     }
 
-    setScene((currentScene) => (currentScene ? moveNodeInStack(currentScene, selectedNode.id, direction) : currentScene));
+    commitScene(moveNodeInStack(scene, selectedNode.id, direction));
   }
 
   function handleCanvasScaleChange(nextScale: number) {
@@ -838,8 +1138,39 @@ export function App() {
         mimeType: assetUri.endsWith(".svg") || assetUri.startsWith("data:image/svg+xml") ? "image/svg+xml" : "image/png",
     });
 
-    setScene(result.scene);
-    setSelectedNodeId(result.nodeId);
+    commitScene(result.scene);
+    updateSceneSelection(result.nodeId);
+  }
+
+  async function handleExternalResourceImport(item: ExternalResourceItem) {
+    if (!scene) {
+      return;
+    }
+
+    setExternalResourceState((currentState) => ({
+      ...currentState,
+      importingId: item.id,
+    }));
+
+    const result = await requestImportExternalResource(makeRequestId("req_resource_import"), item);
+    setExternalResourceState((currentState) => ({
+      ...currentState,
+      importingId: null,
+      mode: result.mode,
+      message: result.message,
+    }));
+
+    if (result.mode !== "live" && !result.response.assetUri.startsWith("/assets/")) {
+      return;
+    }
+
+    const applied = applyLibraryAsset(scene, selectedNodeId, {
+      assetUri: result.response.assetUri,
+      name: item.title,
+      mimeType: result.response.mimeType,
+    });
+    commitScene(applied.scene);
+    updateSceneSelection(applied.nodeId);
   }
 
   function handleGenerateFlowLayout() {
@@ -848,15 +1179,95 @@ export function App() {
     }
 
     const result = buildFlowLayout(scene, flowInput);
-    setScene(result.scene);
-    setSelectedNodeId(result.selectedNodeId);
-    setFocusedTargets([]);
-    setTargetLocalization(null);
+    commitScene(result.scene);
+    updateSceneSelection(result.selectedNodeId);
     setHasManualZoom(false);
+  }
+
+  function triggerCanvasImagePicker() {
+    canvasImageInputRef.current?.click();
   }
 
   function triggerFigureFilePicker() {
     figureFileInputRef.current?.click();
+  }
+
+  async function handleCanvasImageSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      const dimensions = await loadImageDimensions(dataUrl);
+      const baseScene = scene ?? buildEmptyWorkbenchScene(dataUrl, file.name, false);
+      const result = insertImageNode(baseScene, {
+        name: file.name,
+        assetUri: dataUrl,
+        mimeType: file.type || "image/png",
+        assetWidth: dimensions.width,
+        assetHeight: dimensions.height,
+        sourceKind: "upload",
+        tags: ["manual-upload"],
+      });
+
+      commitScene(result.scene);
+      updateSceneSelection(result.nodeId);
+      setProject((currentProject) =>
+        updateTask(currentProject, currentProject.currentTaskId, {
+          title: activeTask?.title?.trim() ? activeTask.title : file.name,
+        }),
+      );
+      setHasManualZoom(false);
+    } catch (error) {
+      setFigureWorkbenchState((currentState) => ({
+        ...currentState,
+        error: error instanceof Error ? error.message : "Could not insert the selected image.",
+      }));
+    }
+  }
+
+  function handleCreateQuickTool(tool: "panel" | "text" | "arrow" | "ellipse" | "diamond") {
+    if (!scene) {
+      return;
+    }
+
+    const result =
+      tool === "panel"
+        ? insertPanelNode(scene, { title: language === "zh-CN" ? "新建面板" : "New panel", tags: ["manual-tool"] })
+        : tool === "text"
+          ? insertTextNode(scene, {
+              text: language === "zh-CN" ? "请输入说明文字" : "Add your annotation",
+              tags: ["manual-tool"],
+            })
+          : tool === "arrow"
+            ? insertArrowNode(scene, {
+                label: language === "zh-CN" ? "关系" : "Relation",
+                semantics: "flows_to",
+                tags: ["manual-tool"],
+              })
+            : insertShapeNode(scene, {
+                shape: tool as ShapeKind,
+                name: tool === "ellipse" ? (language === "zh-CN" ? "椭圆" : "Ellipse") : language === "zh-CN" ? "菱形" : "Diamond",
+                tags: ["manual-tool"],
+              });
+
+    commitScene(result.scene);
+    updateSceneSelection(result.nodeId);
+    setHasManualZoom(false);
+  }
+
+  function handleDeleteSelectedNode() {
+    if (!scene || !selectedNodeId) {
+      return;
+    }
+
+    const nextScene = deleteSceneNode(scene, selectedNodeId);
+    commitScene(nextScene, nextScene.nodes.length > 0 ? "editing" : activeTask?.status ?? "editing");
+    setSelectedNodeId(getInitialSelectionId(nextScene));
+    resetCanvasFocus();
   }
 
   async function handleFigureFileSelected(event: ChangeEvent<HTMLInputElement>) {
@@ -866,10 +1277,16 @@ export function App() {
       return;
     }
 
+    figureAnalysisRunIdRef.current += 1;
+    const analysisRunId = figureAnalysisRunIdRef.current;
+    const currentImportMode = importSession?.importMode ?? "auto";
+    const currentContextNotes = figureWorkbenchState.contextNotes;
+
     setFigureWorkbenchState((currentState) => ({
       ...currentState,
       status: "loading",
       analysis: null,
+      ocrProgress: null,
       recommendedPrompt: "",
       semanticStatus: "idle",
       semanticMode: null,
@@ -878,15 +1295,24 @@ export function App() {
     }));
 
     try {
-      const currentImportMode = importSession?.importMode ?? "auto";
-      const sourceDataUrl = URL.createObjectURL(file);
+      const sourceDataUrl = await readFileAsDataUrl(file);
+      if (figureAnalysisRunIdRef.current !== analysisRunId) {
+        return;
+      }
+
+      const baseScene = scene ?? buildEmptyWorkbenchScene(sourceDataUrl, file.name);
+      if (!scene) {
+        commitScene(baseScene, "parsed");
+      }
+
       setImportSession(createImportSession({ fileName: file.name, sourceDataUrl }));
       setProject((currentProject) =>
         updateTask(currentProject, currentProject.currentTaskId, {
           title: file.name,
           sourceName: file.name,
           sourceDataUrl,
-          contextNotes: figureWorkbenchState.contextNotes,
+          importedSourcePreviewVisible: true,
+          contextNotes: currentContextNotes,
           importMode: currentImportMode,
           analyzePrompt: analyzeState.prompt,
           reconstructProblemNotes: reconstructState.problemNotes,
@@ -895,34 +1321,119 @@ export function App() {
           status: "parsed",
         }),
       );
-      let analysis = await analyzeFigureFile(file, figureWorkbenchState.contextNotes, language, currentImportMode);
-      if (composeRequest) {
-        const draftResult = await requestAnalyzeAsset({
+
+      const draftPromise = composeRequest
+        ? requestAnalyzeAsset({
           requestId: makeRequestId("req_asset_draft"),
           documentId: composeRequest.documentId,
-          normalizedUri: scene?.source.normalizedUri ?? composeRequest.scene.source.normalizedUri,
+          normalizedUri: sourceDataUrl,
           runOcr: true,
           detectRegions: true,
           detectConnectors: true,
+        })
+        : null;
+
+      let insertedSplitPreview = false;
+      const syncLoadingAnalysis = (
+        analysis: FigureWorkbenchAnalysis,
+        progress: {
+          completed: number;
+          total: number;
+        } | null,
+        initializePanels: boolean,
+      ) => {
+        if (figureAnalysisRunIdRef.current !== analysisRunId) {
+          return;
+        }
+
+        setFigureWorkbenchState((currentState) => ({
+          ...currentState,
+          status: "loading",
+          analysis,
+          ocrProgress: progress,
+          recommendedPrompt: analysis.recommendedPrompt,
+          semanticStatus: "idle",
+          semanticMode: null,
+          semanticMessage: "",
+          error: "",
+        }));
+        setProject((currentProject) => {
+          const task = currentProject.tasks.find((item) => item.id === currentProject.currentTaskId);
+          return updateTask(currentProject, currentProject.currentTaskId, {
+            analysis,
+            recommendedPrompt: analysis.recommendedPrompt,
+            mergedRecognizedText: analysis.mergedRecognizedText,
+            panelDecisions: buildPanelDecisions(analysis.panels, initializePanels ? undefined : task?.panelDecisions),
+            status: "in-review",
+          });
         });
+        if (initializePanels) {
+          setImportSession((currentSession) =>
+            currentSession
+              ? {
+                  ...currentSession,
+                  panels: buildPanelDecisions(analysis.panels),
+                }
+              : {
+                  ...createImportSession({ fileName: file.name, sourceDataUrl }),
+                  importMode: currentImportMode,
+                  panels: buildPanelDecisions(analysis.panels),
+                },
+          );
+        }
+        if (!insertedSplitPreview && baseScene && analysis.panels[0]) {
+          const previewResult = insertSingleFigurePanelIntoScene(
+            baseScene,
+            {
+              ...analysis,
+              panels: analysis.panels.slice(0, 1),
+            },
+            analysis.panels[0].id,
+            language,
+          );
+          commitScene(previewResult.scene, "in-review");
+          updateSceneSelection(previewResult.selectedNodeId);
+          insertedSplitPreview = true;
+        }
+      };
+
+      let analysis = await analyzeFigureFile(file, currentContextNotes, language, currentImportMode, {
+        sourceDataUrl,
+        onPanelsDetected: (partialAnalysis) =>
+          syncLoadingAnalysis(partialAnalysis, { completed: 0, total: partialAnalysis.panels.length }, true),
+        onOcrProgress: (partialAnalysis, progress) => syncLoadingAnalysis(partialAnalysis, progress, false),
+      });
+
+      if (figureAnalysisRunIdRef.current !== analysisRunId) {
+        return;
+      }
+
+      if (draftPromise) {
+        const draftResult = await draftPromise;
+        if (figureAnalysisRunIdRef.current !== analysisRunId) {
+          return;
+        }
         analysis = attachBackendDrafts(analysis, draftResult.response);
       }
+
       setFigureWorkbenchState((currentState) => ({
         ...currentState,
         status: "ready",
         analysis,
+        ocrProgress: null,
         recommendedPrompt: analysis.recommendedPrompt,
         semanticStatus: "idle",
         semanticMode: null,
         semanticMessage: "",
         error: "",
       }));
-      setProject((currentProject) =>
-        updateTask(currentProject, currentProject.currentTaskId, {
+      setProject((currentProject) => {
+        const task = currentProject.tasks.find((item) => item.id === currentProject.currentTaskId);
+        return updateTask(currentProject, currentProject.currentTaskId, {
           analysis,
           recommendedPrompt: analysis.recommendedPrompt,
           mergedRecognizedText: analysis.mergedRecognizedText,
-          panelDecisions: analysis.panels.map((panel) => ({ id: panel.id, label: panel.label, decision: "pending" })),
+          panelDecisions: buildPanelDecisions(analysis.panels, task?.panelDecisions),
           analyzeState: {
             ...analyzeState,
           },
@@ -937,21 +1448,25 @@ export function App() {
             appliedVariantId: regenerateState.appliedVariantId,
           },
           status: "in-review",
-        }),
-      );
+        });
+      });
       setImportSession((currentSession) =>
         currentSession
           ? {
               ...currentSession,
-              panels: analysis.panels.map((panel) => ({ id: panel.id, label: panel.label, decision: "pending" })),
+              panels: buildPanelDecisions(analysis.panels, currentSession.panels),
             }
           : currentSession,
       );
     } catch (error) {
+      if (figureAnalysisRunIdRef.current !== analysisRunId) {
+        return;
+      }
       setFigureWorkbenchState((currentState) => ({
         ...currentState,
         status: "error",
         analysis: null,
+        ocrProgress: null,
         recommendedPrompt: "",
         semanticStatus: "idle",
         semanticMode: null,
@@ -1003,14 +1518,9 @@ export function App() {
       return;
     }
 
-    const result = filteredAnalysis.backendDrafts
-      ? insertBackendDraftsIntoScene(scene, filteredAnalysis, language)
-      : insertFigurePanelsIntoScene(scene, filteredAnalysis, language);
-    setScene(result.scene);
-    setProject((currentProject) => updateTask(currentProject, currentProject.currentTaskId, { scene: result.scene, status: "editing" }));
-    setSelectedNodeId(result.selectedNodeId);
-    setFocusedTargets([]);
-    setTargetLocalization(null);
+    const result = insertFigurePanelsIntoScene(scene, filteredAnalysis, language);
+    commitScene(result.scene);
+    updateSceneSelection(result.selectedNodeId);
     setHasManualZoom(false);
   }
 
@@ -1020,10 +1530,8 @@ export function App() {
     }
 
     const result = insertSingleFigurePanelIntoScene(scene, figureWorkbenchState.analysis, panelId, language);
-    setScene(result.scene);
-    setSelectedNodeId(result.selectedNodeId);
-    setFocusedTargets([]);
-    setTargetLocalization(null);
+    commitScene(result.scene);
+    updateSceneSelection(result.selectedNodeId);
     setHasManualZoom(false);
   }
 
@@ -1263,10 +1771,8 @@ export function App() {
       analyzeState.response.actions,
       applyingActionIds,
     );
-    setScene(result.scene);
-    setSelectedNodeId(result.selectedNodeId);
-    setFocusedTargets([]);
-    setTargetLocalization(null);
+    commitScene(result.scene);
+    updateSceneSelection(result.selectedNodeId);
     setHasManualZoom(false);
     setAnalyzeState((currentState) => ({
       ...currentState,
@@ -1274,12 +1780,6 @@ export function App() {
       appliedActionIds: [...currentState.appliedActionIds, ...applyingActionIds],
       staleActionIds: currentState.staleActionIds.filter((actionId) => !applyingActionIds.includes(actionId)),
     }));
-    setProject((currentProject) =>
-      updateTask(currentProject, currentProject.currentTaskId, {
-        scene: result.scene,
-        status: "editing",
-      }),
-    );
   }
 
   async function handleReconstructFigure() {
@@ -1348,10 +1848,8 @@ export function App() {
       reconstructState.response.actions,
       applyingActionIds,
     );
-    setScene(result.scene);
-    setSelectedNodeId(result.selectedNodeId);
-    setFocusedTargets([]);
-    setTargetLocalization(null);
+    commitScene(result.scene);
+    updateSceneSelection(result.selectedNodeId);
     setHasManualZoom(false);
     setReconstructState((currentState) => ({
       ...currentState,
@@ -1359,12 +1857,6 @@ export function App() {
       appliedActionIds: [...currentState.appliedActionIds, ...applyingActionIds],
       staleActionIds: currentState.staleActionIds.filter((actionId) => !applyingActionIds.includes(actionId)),
     }));
-    setProject((currentProject) =>
-      updateTask(currentProject, currentProject.currentTaskId, {
-        scene: result.scene,
-        status: "editing",
-      }),
-    );
   }
 
   function clearTargetLocalization() {
@@ -1487,11 +1979,11 @@ export function App() {
   }
 
   function applyVariant(variant: RegenerateNodeVariant) {
-    if (!selectedNode || !isImageNode(selectedNode)) {
+    if (!scene || !selectedNode || !isImageNode(selectedNode)) {
       return;
     }
 
-    setScene((currentScene) => (currentScene ? applyVariantToImageNode(currentScene, selectedNode.id, variant.asset) : currentScene));
+    commitScene(applyVariantToImageNode(scene, selectedNode.id, variant.asset));
     setRegenerateState((currentState) => ({
       ...currentState,
       appliedVariantId: variant.id,
@@ -1787,10 +2279,11 @@ export function App() {
         titleLabel={copy.labels.projectTitle}
       />
       <input accept="application/json" hidden onChange={handleOpenProjectFile} ref={projectFileInputRef} type="file" />
+      <input accept="image/*" hidden onChange={handleCanvasImageSelected} ref={canvasImageInputRef} type="file" />
 
       <section className="workflow-bar panel">
-        <button className="primary-button" onClick={triggerFigureFilePicker} type="button">
-          {copy.actions.uploadFigure}
+        <button className="primary-button" onClick={triggerCanvasImagePicker} type="button">
+          {quickToolCopy.insertLocalImage}
         </button>
         <button className="primary-button" onClick={triggerFigureFilePicker} type="button">
           {copy.actions.parseAndSplitFigure}
@@ -1808,9 +2301,18 @@ export function App() {
           <TaskListPanel
             createLabel={copy.actions.newTask}
             currentTaskId={project.currentTaskId}
+            deleteLabel={copy.actions.deleteTask}
+            dragLabel={quickToolCopy.dragTask}
             onCreateTask={() => setProject((currentProject) => createTask(currentProject, `Figure ${currentProject.tasks.length + 1}`))}
+            onDeleteTask={(taskId) => setProject((currentProject) => deleteTask(currentProject, taskId))}
+            onMoveTask={(taskId, nextIndex) => setProject((currentProject) => moveTask(currentProject, taskId, nextIndex))}
             onSelectTask={(taskId) => setProject((currentProject) => switchActiveTask(currentProject, taskId))}
-            tasks={project.tasks.map((task) => ({ id: task.id, title: task.title, status: task.status, updatedAt: task.updatedAt }))}
+            tasks={project.tasks.map((task) => ({
+              id: task.id,
+              title: task.title,
+              status: task.status,
+              updatedAt: formatTaskTimestamp(task.updatedAt, language),
+            }))}
             title={copy.labels.taskList}
           />
 
@@ -1919,7 +2421,16 @@ export function App() {
                   <span className={`mode-badge mode-${figureWorkbenchState.semanticMode}`}>{figureWorkbenchState.semanticMode}</span>
                 ) : null}
               </div>
-              {figureWorkbenchState.status === "loading" ? <p className="technical-note">{copy.messages.analyzingFigure}</p> : null}
+              {figureWorkbenchState.status === "loading" ? (
+                <p className="technical-note">
+                  {buildFigureAnalysisStatusMessage(
+                    language,
+                    copy.messages.analyzingFigure,
+                    figureWorkbenchState.analysis?.panels.length ?? 0,
+                    figureWorkbenchState.ocrProgress,
+                  )}
+                </p>
+              ) : null}
               {figureWorkbenchState.status === "error" ? <p className="technical-note">{figureWorkbenchState.error}</p> : null}
               {figureWorkbenchState.analysis ? (
                 <>
@@ -1972,6 +2483,7 @@ export function App() {
                     <strong>{copy.labels.detectedPanels}</strong>
                     {figureWorkbenchState.analysis.panels.length === 1 ? <p className="technical-note">{copy.messages.singlePanelDetected}</p> : null}
                     <SplitReviewPanel
+                      isAnalyzing={figureWorkbenchState.status === "loading"}
                       language={language}
                       onIgnore={(panelId) => handlePanelDecision(panelId, "ignore")}
                       onImportSingle={handleImportSinglePanel}
@@ -2005,6 +2517,62 @@ export function App() {
               recommendedLabel={copy.labels.recommendedResources}
               searchPlaceholder={language === "zh-CN" ? "搜索医学素材" : "Search medical assets"}
             />
+            <div className="response-panel external-resource-panel">
+              <div className="response-header">
+                <strong>{externalResourceCopy.title}</strong>
+                {externalResourceState.mode ? (
+                  <span className={`mode-badge mode-${externalResourceState.mode}`}>{externalResourceState.mode}</span>
+                ) : null}
+              </div>
+              <p className="technical-note">{externalResourceCopy.hint}</p>
+              {libraryQuery.trim().length < 2 ? <p className="technical-note">{externalResourceCopy.idle}</p> : null}
+              {externalResourceState.status === "loading" ? <p className="technical-note">{externalResourceCopy.loading}</p> : null}
+              {externalResourceState.message ? <p className="technical-note">{externalResourceState.message}</p> : null}
+              {externalResourceState.warnings.length > 0 ? (
+                <div className="response-subsection">
+                  <strong>{externalResourceCopy.warningLabel}</strong>
+                  <div className="action-list">
+                    {externalResourceState.warnings.map((warning) => (
+                      <div className="export-warning export-warning-warning" key={warning}>
+                        <p>{warning}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {libraryQuery.trim().length >= 2 && externalResourceState.status !== "loading" && externalResourceState.items.length === 0 ? (
+                <p className="technical-note">{externalResourceCopy.empty}</p>
+              ) : null}
+              {externalResourceState.items.length > 0 ? (
+                <div className="library-grid external-library-grid">
+                  {externalResourceState.items.map((item) => (
+                    <article className="library-card external-library-card" key={item.id}>
+                      <img alt={item.title} className="library-preview" src={resolveAssetUrl(item.previewUrl)} />
+                      <div className="library-meta">
+                        <strong>{item.title}</strong>
+                        <span>{item.providerLabel}</span>
+                        {item.description ? <span>{item.description}</span> : null}
+                        {item.license ? <span>{item.license}</span> : null}
+                        {item.attribution ? <span>{item.attribution}</span> : null}
+                      </div>
+                      <div className="prompt-actions-row">
+                        <button
+                          className="secondary-button"
+                          disabled={externalResourceState.importingId === item.id}
+                          onClick={() => void handleExternalResourceImport(item)}
+                          type="button"
+                        >
+                          {externalResourceState.importingId === item.id ? externalResourceCopy.importingLabel : externalResourceCopy.importLabel}
+                        </button>
+                        <a className="resource-link" href={item.sourcePageUrl} rel="noreferrer" target="_blank">
+                          {externalResourceCopy.sourceLabel}
+                        </a>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              ) : null}
+            </div>
             <div className="resource-grid">
               {MEDICAL_RESOURCE_CARDS.map((resource) => (
                 <article className="resource-card" key={resource.id}>
@@ -2034,16 +2602,47 @@ export function App() {
               <p className="section-label">{copy.sections.canvas}</p>
               <h2>{copy.labels.canvasHelp}</h2>
             </div>
-              <div className="canvas-tools">
-                <span className="status-pill">
-                  {selectedNode ? `${copy.labels.selected}: ${describeNode(selectedNode)}` : copy.labels.noSelection}
-                </span>
-                <button className="primary-button" onClick={triggerFigureFilePicker} type="button">
+            <div className="canvas-tools">
+              <span className="status-pill">
+                {selectedNode ? `${copy.labels.selected}: ${describeNode(selectedNode)}` : copy.labels.noSelection}
+              </span>
+              <div className="canvas-action-row">
+                <button className="primary-button" onClick={triggerCanvasImagePicker} type="button">
+                  {quickToolCopy.insertLocalImage}
+                </button>
+                <button className="secondary-button" onClick={triggerFigureFilePicker} type="button">
                   {copy.actions.parseAndSplitFigure}
                 </button>
-                <div className="zoom-controls" role="group" aria-label={copy.labels.zoom}>
-                  <button onClick={() => handleCanvasScaleChange(canvasScale - CANVAS_SCALE_STEP)} type="button">
-                    {copy.actions.zoomOut}
+                <button className="secondary-button" disabled={!selectedNodeId} onClick={handleDeleteSelectedNode} type="button">
+                  {quickToolCopy.deleteSelected}
+                </button>
+              </div>
+              <div className="canvas-tool-shelf">
+                <div>
+                  <strong>{quickToolCopy.quickTools}</strong>
+                  <p className="library-hint">{quickToolCopy.quickToolsHint}</p>
+                </div>
+                <div className="tool-palette">
+                  <button className="secondary-button" onClick={() => handleCreateQuickTool("panel")} type="button">
+                    {quickToolCopy.addPanel}
+                  </button>
+                  <button className="secondary-button" onClick={() => handleCreateQuickTool("text")} type="button">
+                    {quickToolCopy.addText}
+                  </button>
+                  <button className="secondary-button" onClick={() => handleCreateQuickTool("arrow")} type="button">
+                    {quickToolCopy.addArrow}
+                  </button>
+                  <button className="secondary-button" onClick={() => handleCreateQuickTool("ellipse")} type="button">
+                    {quickToolCopy.addEllipse}
+                  </button>
+                  <button className="secondary-button" onClick={() => handleCreateQuickTool("diamond")} type="button">
+                    {quickToolCopy.addDiamond}
+                  </button>
+                </div>
+              </div>
+              <div className="zoom-controls" role="group" aria-label={copy.labels.zoom}>
+                <button onClick={() => handleCanvasScaleChange(canvasScale - CANVAS_SCALE_STEP)} type="button">
+                  {copy.actions.zoomOut}
                 </button>
                 <button onClick={handleFitCanvas} type="button">
                   {copy.actions.resetZoom}
@@ -2092,7 +2691,7 @@ export function App() {
               ) : null}
               <EditorCanvas
                 highlightTargets={focusedTargets}
-                onSceneChange={setScene}
+                onSceneChange={handleCanvasSceneChange}
                 onSelectNode={setSelectedNodeId}
                 scene={scene}
                 selectedNodeId={selectedNodeId}
@@ -2272,6 +2871,104 @@ export function App() {
                       }}
                       type="color"
                       value={selectedNode.style.color}
+                    />
+                  </label>
+                </div>
+              ) : null}
+
+              {isShapeNode(selectedNode) ? (
+                <div className="property-block">
+                  <label>
+                    <span>{language === "zh-CN" ? "图形类型" : "Shape kind"}</span>
+                    <select
+                      onChange={(event) => {
+                        updateSceneNode(selectedNode.id, (node) =>
+                          node.type === "shape"
+                            ? {
+                                ...node,
+                                shape: event.target.value as ShapeKind,
+                                name:
+                                  event.target.value === "ellipse"
+                                    ? language === "zh-CN"
+                                      ? "椭圆"
+                                      : "Ellipse"
+                                    : event.target.value === "diamond"
+                                      ? language === "zh-CN"
+                                        ? "菱形"
+                                        : "Diamond"
+                                      : language === "zh-CN"
+                                        ? "矩形"
+                                        : "Rectangle",
+                              }
+                            : node,
+                        );
+                      }}
+                      value={selectedNode.shape}
+                    >
+                      <option value="rectangle">{language === "zh-CN" ? "矩形" : "Rectangle"}</option>
+                      <option value="ellipse">{language === "zh-CN" ? "椭圆" : "Ellipse"}</option>
+                      <option value="diamond">{language === "zh-CN" ? "菱形" : "Diamond"}</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>{language === "zh-CN" ? "填充色" : "Fill"}</span>
+                    <input
+                      onChange={(event) => {
+                        updateSceneNode(selectedNode.id, (node) =>
+                          node.type === "shape"
+                            ? {
+                                ...node,
+                                style: {
+                                  ...node.style,
+                                  fill: event.target.value,
+                                },
+                              }
+                            : node,
+                        );
+                      }}
+                      type="color"
+                      value={selectedNode.style.fill}
+                    />
+                  </label>
+                  <label>
+                    <span>{language === "zh-CN" ? "描边色" : "Stroke"}</span>
+                    <input
+                      onChange={(event) => {
+                        updateSceneNode(selectedNode.id, (node) =>
+                          node.type === "shape"
+                            ? {
+                                ...node,
+                                style: {
+                                  ...node.style,
+                                  stroke: event.target.value,
+                                },
+                              }
+                            : node,
+                        );
+                      }}
+                      type="color"
+                      value={selectedNode.style.stroke}
+                    />
+                  </label>
+                  <label>
+                    <span>{language === "zh-CN" ? "描边宽度" : "Stroke width"}</span>
+                    <input
+                      min={1}
+                      onChange={(event) => {
+                        updateSceneNode(selectedNode.id, (node) =>
+                          node.type === "shape"
+                            ? {
+                                ...node,
+                                style: {
+                                  ...node.style,
+                                  strokeWidth: Math.max(event.target.valueAsNumber || node.style.strokeWidth, 1),
+                                },
+                              }
+                            : node,
+                        );
+                      }}
+                      type="number"
+                      value={selectedNode.style.strokeWidth}
                     />
                   </label>
                 </div>

@@ -205,13 +205,34 @@ class ArrowNodeModel(BaseNodeModel):
     editableMode: ArrowEditableModeModel
 
 
+class ShapeStyleModel(BaseModel):
+    fill: str
+    stroke: str
+    strokeWidth: float = Field(gt=0)
+    dashArray: list[float] | None = None
+
+
+class ShapeEditableModeModel(BaseModel):
+    move: Literal[True]
+    resize: Literal[True]
+    editStyle: Literal[True]
+    regenerate: Literal[False]
+
+
+class ShapeNodeModel(BaseNodeModel):
+    type: Literal["shape"]
+    shape: Literal["rectangle", "ellipse", "diamond"]
+    style: ShapeStyleModel
+    editableMode: ShapeEditableModeModel
+
+
 class GroupNodeModel(BaseNodeModel):
     type: Literal["group"]
     childIds: list[str]
 
 
 SceneNodeModel = Annotated[
-    PanelNodeModel | ImageNodeModel | TextNodeModel | ArrowNodeModel | GroupNodeModel,
+    PanelNodeModel | ImageNodeModel | TextNodeModel | ArrowNodeModel | ShapeNodeModel | GroupNodeModel,
     Field(discriminator="type"),
 ]
 
@@ -388,3 +409,44 @@ class ExportSceneResponseModel(BaseModel):
 
 class HealthResponseModel(BaseModel):
     status: Literal["ok"]
+
+
+class ExternalResourceItemModel(BaseModel):
+    id: str
+    providerId: Literal["servier", "bioicons", "wikimedia", "cdc-phil"]
+    providerLabel: str
+    title: str
+    description: str | None = None
+    previewUrl: str
+    sourcePageUrl: str
+    assetUrl: str
+    mimeType: str
+    license: str | None = None
+    attribution: str | None = None
+    tags: list[str] = []
+
+
+class ExternalResourceSearchResponseModel(BaseModel):
+    query: str
+    items: list[ExternalResourceItemModel]
+    warnings: list[str]
+
+
+class ImportExternalResourceRequestModel(BaseModel):
+    requestId: str = Field(min_length=1)
+    item: ExternalResourceItemModel
+
+
+class ImportExternalResourceResponseModel(BaseModel):
+    requestId: str
+    providerId: Literal["servier", "bioicons", "wikimedia", "cdc-phil"]
+    providerLabel: str
+    title: str
+    assetUri: str
+    previewUri: str
+    mimeType: str
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
+    sourcePageUrl: str | None = None
+    license: str | None = None
+    attribution: str | None = None

@@ -1,3 +1,5 @@
+import type { KeyboardEvent } from "react";
+
 import type { ElementLibraryItem, LibraryCategoryId } from "../../element-library";
 
 type Props = {
@@ -16,6 +18,15 @@ type Props = {
 };
 
 export function ResourceBrowser(props: Props) {
+  function handleCardKeyDown(event: KeyboardEvent<HTMLElement>, assetUri: string, label: string) {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    props.onApply(assetUri, label);
+  }
+
   return (
     <div className="resource-browser">
       {props.recommendedItems.length > 0 ? (
@@ -23,13 +34,27 @@ export function ResourceBrowser(props: Props) {
           <strong>{props.recommendedLabel}</strong>
           <div className="library-grid recommended-grid">
             {props.recommendedItems.map((item) => (
-              <article className="library-card" key={`recommended-${item.id}`}>
+              <article
+                className="library-card is-clickable"
+                key={`recommended-${item.id}`}
+                onClick={() => props.onApply(item.assetUri, item.label)}
+                onKeyDown={(event) => handleCardKeyDown(event, item.assetUri, item.label)}
+                role="button"
+                tabIndex={0}
+              >
                 <img alt={item.label} className="library-preview" src={item.previewUri} />
                 <div className="library-meta">
                   <strong>{item.label}</strong>
                   <span>{item.assetUri}</span>
                 </div>
-                <button className="secondary-button" onClick={() => props.onApply(item.assetUri, item.label)} type="button">
+                <button
+                  className="secondary-button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    props.onApply(item.assetUri, item.label);
+                  }}
+                  type="button"
+                >
                   {props.actionLabel}
                 </button>
               </article>
@@ -59,13 +84,27 @@ export function ResourceBrowser(props: Props) {
 
       <div className="library-grid">
         {props.filteredItems.map((item) => (
-          <article className="library-card" key={item.id}>
+          <article
+            className="library-card is-clickable"
+            key={item.id}
+            onClick={() => props.onApply(item.assetUri, item.label)}
+            onKeyDown={(event) => handleCardKeyDown(event, item.assetUri, item.label)}
+            role="button"
+            tabIndex={0}
+          >
             <img alt={item.label} className="library-preview" src={item.previewUri} />
             <div className="library-meta">
               <strong>{item.label}</strong>
               <span>{item.assetUri}</span>
             </div>
-            <button className="secondary-button" onClick={() => props.onApply(item.assetUri, item.label)} type="button">
+            <button
+              className="secondary-button"
+              onClick={(event) => {
+                event.stopPropagation();
+                props.onApply(item.assetUri, item.label);
+              }}
+              type="button"
+            >
               {props.actionLabel}
             </button>
           </article>

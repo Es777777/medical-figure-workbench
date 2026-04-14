@@ -27,6 +27,19 @@ export function buildTaskSvgExport(task: FigureTask) {
       const last = node.points[node.points.length - 1] ?? { x: node.transform.x + node.transform.width, y: node.transform.y + node.transform.height };
       return `<line x1="${first.x}" y1="${first.y}" x2="${last.x}" y2="${last.y}" stroke="${node.style.stroke}" stroke-width="${node.style.strokeWidth}" />`;
     }
+    if (node.type === "shape") {
+      if (node.shape === "ellipse") {
+        return `<ellipse cx="${node.transform.x + node.transform.width / 2}" cy="${node.transform.y + node.transform.height / 2}" rx="${node.transform.width / 2}" ry="${node.transform.height / 2}" fill="${escapeXml(node.style.fill)}" stroke="${escapeXml(node.style.stroke)}" stroke-width="${node.style.strokeWidth}" />`;
+      }
+      if (node.shape === "diamond") {
+        const top = `${node.transform.x + node.transform.width / 2},${node.transform.y}`;
+        const right = `${node.transform.x + node.transform.width},${node.transform.y + node.transform.height / 2}`;
+        const bottom = `${node.transform.x + node.transform.width / 2},${node.transform.y + node.transform.height}`;
+        const left = `${node.transform.x},${node.transform.y + node.transform.height / 2}`;
+        return `<polygon points="${top} ${right} ${bottom} ${left}" fill="${escapeXml(node.style.fill)}" stroke="${escapeXml(node.style.stroke)}" stroke-width="${node.style.strokeWidth}" />`;
+      }
+      return `<rect x="${node.transform.x}" y="${node.transform.y}" width="${node.transform.width}" height="${node.transform.height}" fill="${escapeXml(node.style.fill)}" stroke="${escapeXml(node.style.stroke)}" stroke-width="${node.style.strokeWidth}" rx="16" ry="16" />`;
+    }
     return "";
   });
   const content = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${nodeFragments.join("")}</svg>`;

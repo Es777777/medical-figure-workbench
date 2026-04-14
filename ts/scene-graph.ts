@@ -13,8 +13,9 @@ export type Rect = {
 };
 
 export type SceneKind = "scientific-figure";
-export type NodeType = "panel" | "image" | "text" | "arrow" | "group";
+export type NodeType = "panel" | "image" | "text" | "arrow" | "shape" | "group";
 export type ArrowSemantic = "promote" | "inhibit" | "associate" | "contains" | "annotates" | "flows_to" | "unknown";
+export type ShapeKind = "rectangle" | "ellipse" | "diamond";
 
 export type AssetSourceKind = "upload" | "normalized" | "generated" | "extracted";
 
@@ -132,12 +133,29 @@ export interface ArrowNode extends BaseNode {
   };
 }
 
+export interface ShapeNode extends BaseNode {
+  type: "shape";
+  shape: ShapeKind;
+  style: {
+    fill: string;
+    stroke: string;
+    strokeWidth: number;
+    dashArray?: number[];
+  };
+  editableMode: {
+    move: true;
+    resize: true;
+    editStyle: true;
+    regenerate: false;
+  };
+}
+
 export interface GroupNode extends BaseNode {
   type: "group";
   childIds: ID[];
 }
 
-export type SceneNode = PanelNode | ImageNode | TextNode | ArrowNode | GroupNode;
+export type SceneNode = PanelNode | ImageNode | TextNode | ArrowNode | ShapeNode | GroupNode;
 
 export interface Canvas {
   width: number;

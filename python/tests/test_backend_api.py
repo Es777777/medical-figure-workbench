@@ -5,6 +5,7 @@ import tempfile
 import unittest
 import importlib
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from PIL import Image
@@ -218,6 +219,143 @@ class BackendApiTests(unittest.TestCase):
             )
             self.assertEqual(regenerate_response.status_code, 400)
             self.assertEqual(regenerate_response.json()["error"]["code"], "contract_violation")
+
+    def test_resource_search_route_returns_external_items(self) -> None:
+        fake_items = [
+            {
+                "id": "servier:kidney",
+                "providerId": "servier",
+                "providerLabel": "Servier Medical Art",
+                "title": "Kidney",
+                "description": "Urology",
+                "previewUrl": "https://smart.servier.com/wp-content/uploads/2016/10/rein_01.png",
+                "sourcePageUrl": "https://smart.servier.com/smart_image/kidney/",
+                "assetUrl": "https://smart.servier.com/wp-content/uploads/2016/10/rein_01.png",
+                "mimeType": "image/png",
+                "license": "CC BY 4.0",
+                "attribution": "Servier Medical Art",
+                "tags": ["Urology"],
+            }
+        ]
+
+        with patch.object(BACKEND_MAIN, "search_external_resources", return_value=(fake_items, [])):
+            response = self.client.get("/resource-search", params={"query": "kidney", "limit": 8})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["query"], "kidney")
+        self.assertEqual(len(payload["items"]), 1)
+        self.assertEqual(payload["items"][0]["providerId"], "servier")
+
+    def test_resource_search_route_accepts_cdc_phil_items(self) -> None:
+        fake_items = [
+            {
+                "id": "cdc-phil:30335",
+                "providerId": "cdc-phil",
+                "providerLabel": "CDC PHIL",
+                "title": "Primary monkey kidney cell cultures",
+                "description": "Historic laboratory photograph from CDC PHIL.",
+                "previewUrl": "https://wwwn.cdc.gov/phil/PHIL_Images/30335/30335_lores.jpg",
+                "sourcePageUrl": "https://wwwn.cdc.gov/phil/Details.aspx?pid=30335",
+                "assetUrl": "https://wwwn.cdc.gov/phil/Details.aspx?pid=30335",
+                "mimeType": "image/tiff",
+                "license": "Use per CDC PHIL terms",
+                "attribution": "CDC PHIL",
+                "tags": ["CDC"],
+            }
+        ]
+
+        with patch.object(BACKEND_MAIN, "search_external_resources", return_value=(fake_items, [])):
+            response = self.client.get("/resource-search", params={"query": "kidney", "limit": 8})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["items"][0]["providerId"], "cdc-phil")
+
+    def test_resource_import_route_returns_local_asset(self) -> None:
+        fake_response = {
+            "providerId": "wikimedia",
+            "providerLabel": "Wikimedia Commons",
+            "title": "Kidney icon",
+            "assetUri": "/assets/external/wikimedia_kidney_icon.svg",
+            "previewUri": "/assets/external/wikimedia_kidney_icon.svg",
+            "mimeType": "image/svg+xml",
+            "width": 320,
+            "height": 220,
+            "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Kidney_icon.svg",
+            "license": "CC BY 4.0",
+            "attribution": "Wikimedia Commons",
+        }
+
+        with patch.object(BACKEND_MAIN, "import_external_resource", return_value=fake_response):
+            response = self.client.post(
+                "/resource-import",
+                json={
+                    "requestId": "req_resource_import",
+                    "item": {
+                        "id": "wikimedia:kidney",
+                        "providerId": "wikimedia",
+                        "providerLabel": "Wikimedia Commons",
+                        "title": "Kidney icon",
+                        "description": "Kidney icon",
+                        "previewUrl": "https://upload.wikimedia.org/example.svg",
+                        "sourcePageUrl": "https://commons.wikimedia.org/wiki/File:Kidney_icon.svg",
+                        "assetUrl": "https://upload.wikimedia.org/example.svg",
+                        "mimeType": "image/svg+xml",
+                        "license": "CC BY 4.0",
+                        "attribution": "Wikimedia Commons",
+                        "tags": [],
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["requestId"], "req_resource_import")
+        self.assertEqual(payload["assetUri"], "/assets/external/wikimedia_kidney_icon.svg")
+        self.assertEqual(payload["providerId"], "wikimedia")
+
+    def test_resource_import_route_accepts_cdc_phil_response(self) -> None:
+        fake_response = {
+            "providerId": "cdc-phil",
+            "providerLabel": "CDC PHIL",
+            "title": "Primary monkey kidney cell cultures",
+            "assetUri": "/assets/external/cdc_phil_primary_monkey_kidney_cell_cultures.png",
+            "previewUri": "/assets/external/cdc_phil_primary_monkey_kidney_cell_cultures.png",
+            "mimeType": "image/png",
+            "width": 1600,
+            "height": 1200,
+            "sourcePageUrl": "https://wwwn.cdc.gov/phil/Details.aspx?pid=30335",
+            "license": "Use per CDC PHIL terms",
+            "attribution": "CDC PHIL",
+        }
+
+        with patch.object(BACKEND_MAIN, "import_external_resource", return_value=fake_response):
+            response = self.client.post(
+                "/resource-import",
+                json={
+                    "requestId": "req_resource_import_cdc",
+                    "item": {
+                        "id": "cdc-phil:30335",
+                        "providerId": "cdc-phil",
+                        "providerLabel": "CDC PHIL",
+                        "title": "Primary monkey kidney cell cultures",
+                        "description": "Historic laboratory photograph from CDC PHIL.",
+                        "previewUrl": "https://wwwn.cdc.gov/phil/PHIL_Images/30335/30335_lores.jpg",
+                        "sourcePageUrl": "https://wwwn.cdc.gov/phil/Details.aspx?pid=30335",
+                        "assetUrl": "https://wwwn.cdc.gov/phil/Details.aspx?pid=30335",
+                        "mimeType": "image/tiff",
+                        "license": "Use per CDC PHIL terms",
+                        "attribution": "CDC PHIL",
+                        "tags": ["CDC"],
+                    },
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["providerId"], "cdc-phil")
+        self.assertEqual(payload["mimeType"], "image/png")
 
 
 if __name__ == "__main__":

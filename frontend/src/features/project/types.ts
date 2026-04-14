@@ -15,6 +15,7 @@ export type FigureTask = {
   importMode: ImportMode;
   sourceDataUrl: string;
   sourceName: string;
+  importedSourcePreviewVisible: boolean;
   contextNotes: string;
   recommendedPrompt: string;
   mergedRecognizedText: string;

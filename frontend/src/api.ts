@@ -16,6 +16,8 @@ export const API_ROUTES = {
   composeFigure: "/compose-figure",
   reconstructFigure: "/reconstruct-figure",
   regenerateNode: "/regenerate-node",
+  resourceSearch: "/resource-search",
+  resourceImport: "/resource-import",
 } as const;
 
 export interface RegenerateActionResult {
@@ -39,6 +41,52 @@ export interface ReconstructFigureActionResult {
 export interface AnalyzeAssetActionResult {
   mode: "live" | "fallback";
   response: AnalyzeAssetResponse;
+  message: string;
+}
+
+export type ExternalResourceItem = {
+  id: string;
+  providerId: "servier" | "bioicons" | "wikimedia" | "cdc-phil";
+  providerLabel: string;
+  title: string;
+  description?: string | null;
+  previewUrl: string;
+  sourcePageUrl: string;
+  assetUrl: string;
+  mimeType: string;
+  license?: string | null;
+  attribution?: string | null;
+  tags: string[];
+};
+
+export interface ExternalResourceSearchResponse {
+  query: string;
+  items: ExternalResourceItem[];
+  warnings: string[];
+}
+
+export interface ExternalResourceSearchActionResult {
+  mode: "live" | "fallback";
+  response: ExternalResourceSearchResponse;
+  message: string;
+}
+
+export interface ImportExternalResourceActionResult {
+  mode: "live" | "fallback";
+  response: {
+    requestId: string;
+    providerId: ExternalResourceItem["providerId"];
+    providerLabel: string;
+    title: string;
+    assetUri: string;
+    previewUri: string;
+    mimeType: string;
+    width: number;
+    height: number;
+    sourcePageUrl?: string | null;
+    license?: string | null;
+    attribution?: string | null;
+  };
   message: string;
 }
 
@@ -400,6 +448,116 @@ export async function requestReconstructFigure(payload: ReconstructFigureRequest
       mode: "fallback",
       response: buildLocalReconstructResponse(payload),
       message: `Backend unavailable for reconstruct-figure, using deterministic fallback: ${message}`,
+    };
+  }
+}
+
+export async function requestSearchExternalResources(query: string, limit = 12): Promise<ExternalResourceSearchActionResult> {
+  const apiBaseUrl = getApiBaseUrl();
+  if (!apiBaseUrl) {
+    return {
+      mode: "fallback",
+      response: {
+        query,
+        items: [],
+        warnings: [],
+      },
+      message: "No API base configured for external resource search.",
+    };
+  }
+
+  try {
+    const params = new URLSearchParams({
+      query,
+      limit: String(limit),
+    });
+    const response = await fetch(`${apiBaseUrl}${API_ROUTES.resourceSearch}?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error(await readErrorMessage(response));
+    }
+
+    return {
+      mode: "live",
+      response: (await response.json()) as ExternalResourceSearchResponse,
+      message: "External resource results loaded.",
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown request error";
+    return {
+      mode: "fallback",
+      response: {
+        query,
+        items: [],
+        warnings: [],
+      },
+      message: `External resource search failed: ${message}`,
+    };
+  }
+}
+
+export async function requestImportExternalResource(
+  requestId: string,
+  item: ExternalResourceItem,
+): Promise<ImportExternalResourceActionResult> {
+  const apiBaseUrl = getApiBaseUrl();
+  if (!apiBaseUrl) {
+    return {
+      mode: "fallback",
+      response: {
+        requestId,
+        providerId: item.providerId,
+        providerLabel: item.providerLabel,
+        title: item.title,
+        assetUri: item.previewUrl,
+        previewUri: item.previewUrl,
+        mimeType: item.mimeType,
+        width: 320,
+        height: 220,
+        sourcePageUrl: item.sourcePageUrl,
+        license: item.license,
+        attribution: item.attribution,
+      },
+      message: "No API base configured for external resource import.",
+    };
+  }
+
+  try {
+    const response = await fetch(`${apiBaseUrl}${API_ROUTES.resourceImport}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requestId,
+        item,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(await readErrorMessage(response));
+    }
+
+    return {
+      mode: "live",
+      response: (await response.json()) as ImportExternalResourceActionResult["response"],
+      message: "External resource imported into local assets.",
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown request error";
+    return {
+      mode: "fallback",
+      response: {
+        requestId,
+        providerId: item.providerId,
+        providerLabel: item.providerLabel,
+        title: item.title,
+        assetUri: item.previewUrl,
+        previewUri: item.previewUrl,
+        mimeType: item.mimeType,
+        width: 320,
+        height: 220,
+        sourcePageUrl: item.sourcePageUrl,
+        license: item.license,
+        attribution: item.attribution,
+      },
+      message: `External resource import failed: ${message}`,
     };
   }
 }

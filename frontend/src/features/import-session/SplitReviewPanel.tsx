@@ -2,6 +2,7 @@ import { UI_COPY, type Language } from "../../copy";
 
 type Props = {
   language: Language;
+  isAnalyzing?: boolean;
   panels: Array<{
     id: string;
     label: string;
@@ -28,7 +29,13 @@ export function SplitReviewPanel(props: Props) {
             <strong>{panel.label}</strong>
             <span>confidence {Math.round(panel.confidence * 100)}%</span>
           </div>
-          <p className="figure-panel-text">{panel.recognizedText || copy.labels.noOcrText}</p>
+          <p className={`figure-panel-text${props.isAnalyzing && !panel.recognizedText ? " is-pending" : ""}`}>
+            {props.isAnalyzing && !panel.recognizedText
+              ? props.language === "zh-CN"
+                ? "OCR 识别中..."
+                : "OCR running..."
+              : panel.recognizedText || copy.labels.noOcrText}
+          </p>
           <div className="prompt-actions-row">
             <button className="secondary-button" onClick={() => props.onKeep(panel.id)} type="button">
               {copy.actions.keepPanel}

@@ -1,6 +1,16 @@
 import fixture from "@examples/minimal-compose-request.json";
 import type { ComposeFigureRequest, PlannerAction, PromptEntityDraft, PromptRelationDraft } from "@shared/api-contracts";
-import { assertSceneGraph, type ImageNode, type SceneGraph, type SceneNode, type TextNode } from "@shared/scene-graph";
+import {
+  assertSceneGraph,
+  type ArrowSemantic,
+  type AssetSourceKind,
+  type ImageNode,
+  type SceneGraph,
+  type SceneNode,
+  type ShapeKind,
+  type ShapeNode,
+  type TextNode,
+} from "@shared/scene-graph";
 
 import { getLibraryItemById } from "./element-library";
 
@@ -15,6 +25,18 @@ export type LibraryAssetInput = {
   name: string;
   assetUri: string;
   mimeType?: string;
+};
+
+export type InsertImageNodeInput = LibraryAssetInput & {
+  width?: number;
+  height?: number;
+  assetWidth?: number;
+  assetHeight?: number;
+  x?: number;
+  y?: number;
+  parentId?: string;
+  sourceKind?: AssetSourceKind;
+  tags?: string[];
 };
 
 function createFlowSlotAssetUri(label: string): string {
@@ -60,6 +82,36 @@ function getArrowStyleForSemantics(semantics: PromptRelationDraft["semantics"]) 
 }
 
 const STACK_Z_INDEX_STEP = 10;
+
+function createNodeId(prefix: string): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function getNextZIndex(scene: SceneGraph): number {
+  return scene.nodes.reduce((highest, node) => Math.max(highest, node.zIndex), 0) + STACK_Z_INDEX_STEP;
+}
+
+function getAutoPlacement(scene: SceneGraph, width: number, height: number) {
+  const offsetSeed = scene.nodes.filter((node) => node.tags?.includes("manual-tool") || node.tags?.includes("manual-upload")).length;
+  const offset = Math.min(offsetSeed, 5) * 28;
+  return {
+    x: Math.max(Math.round((scene.canvas.width - width) / 2) + offset, 24),
+    y: Math.max(Math.round((scene.canvas.height - height) / 2) + offset, 24),
+  };
+}
+
+function fitImageNodeSize(scene: SceneGraph, assetWidth?: number, assetHeight?: number): { width: number; height: number } {
+  const safeAssetWidth = Math.max(assetWidth ?? 320, 1);
+  const safeAssetHeight = Math.max(assetHeight ?? 220, 1);
+  const maxWidth = Math.min(scene.canvas.width * 0.42, 420);
+  const maxHeight = Math.min(scene.canvas.height * 0.34, 280);
+  const scale = Math.min(maxWidth / safeAssetWidth, maxHeight / safeAssetHeight, 1);
+
+  return {
+    width: Math.max(Math.round(safeAssetWidth * scale), 120),
+    height: Math.max(Math.round(safeAssetHeight * scale), 90),
+  };
+}
 
 function assertComposeFigureFixture(value: unknown): asserts value is ComposeFigureRequest {
   if (!value || typeof value !== "object") {
@@ -145,6 +197,10 @@ export function isTextNode(node: SceneNode | null): node is TextNode {
 
 export function isImageNode(node: SceneNode | null): node is ImageNode {
   return node?.type === "image";
+}
+
+export function isShapeNode(node: SceneNode | null): node is ShapeNode {
+  return node?.type === "shape";
 }
 
 export function updateNodeById(scene: SceneGraph, nodeId: string, updater: (node: SceneNode) => SceneNode): SceneGraph {
@@ -331,12 +387,24 @@ export function applyLibraryAsset(scene: SceneGraph, targetNodeId: string | null
     }
   }
 
-  const nextZIndex = scene.nodes.reduce((highest, node) => Math.max(highest, node.zIndex), 0) + STACK_Z_INDEX_STEP;
-  const nodeId = `img_library_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-  const width = 180;
-  const height = 132;
-  const x = Math.max((scene.canvas.width - width) / 2, 24);
-  const y = Math.max((scene.canvas.height - height) / 2, 24);
+  return insertImageNode(scene, {
+    name: asset.name,
+    assetUri: asset.assetUri,
+    mimeType: asset.mimeType ?? "image/svg+xml",
+    width: 180,
+    height: 132,
+    sourceKind: "generated",
+    tags: ["manual-tool"],
+  });
+}
+
+export function insertImageNode(scene: SceneGraph, input: InsertImageNodeInput): { scene: SceneGraph; nodeId: string } {
+  const nodeId = createNodeId("img_library");
+  const timestamp = new Date().toISOString();
+  const fittedSize = fitImageNodeSize(scene, input.assetWidth, input.assetHeight);
+  const width = Math.max(Math.round(input.width ?? fittedSize.width), 1);
+  const height = Math.max(Math.round(input.height ?? fittedSize.height), 1);
+  const placement = input.x !== undefined && input.y !== undefined ? { x: input.x, y: input.y } : getAutoPlacement(scene, width, height);
 
   return {
     scene: {
@@ -346,29 +414,30 @@ export function applyLibraryAsset(scene: SceneGraph, targetNodeId: string | null
         {
           id: nodeId,
           type: "image",
-          name: asset.name,
-          zIndex: nextZIndex,
+          name: input.name,
+          parentId: input.parentId,
+          zIndex: getNextZIndex(scene),
           transform: {
-            x,
-            y,
+            x: placement.x,
+            y: placement.y,
             width,
             height,
           },
           bbox: {
-            x,
-            y,
+            x: placement.x,
+            y: placement.y,
             width,
             height,
           },
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
+          createdAt: timestamp,
+          updatedAt: timestamp,
           asset: {
             assetId: `asset_${nodeId}`,
-            uri: asset.assetUri,
-            mimeType: asset.mimeType ?? "image/svg+xml",
-            width,
-            height,
-            sourceKind: "generated",
+            uri: input.assetUri,
+            mimeType: input.mimeType ?? "image/png",
+            width: input.assetWidth ?? width,
+            height: input.assetHeight ?? height,
+            sourceKind: input.sourceKind ?? "generated",
           },
           editableMode: {
             move: true,
@@ -377,10 +446,247 @@ export function applyLibraryAsset(scene: SceneGraph, targetNodeId: string | null
             regenerate: true,
             replaceAsset: true,
           },
+          tags: input.tags,
         },
       ],
     },
     nodeId,
+  };
+}
+
+export function insertTextNode(
+  scene: SceneGraph,
+  options?: {
+    text?: string;
+    width?: number;
+    height?: number;
+    backgroundColor?: string;
+    tags?: string[];
+  },
+): { scene: SceneGraph; nodeId: string } {
+  const width = options?.width ?? 240;
+  const height = options?.height ?? 70;
+  const placement = getAutoPlacement(scene, width, height);
+  const nodeId = createNodeId("text_manual");
+  const timestamp = new Date().toISOString();
+
+  return {
+    scene: {
+      ...scene,
+      nodes: [
+        ...scene.nodes,
+        {
+          id: nodeId,
+          type: "text",
+          name: "Label",
+          zIndex: getNextZIndex(scene),
+          transform: { x: placement.x, y: placement.y, width, height },
+          bbox: { x: placement.x, y: placement.y, width, height },
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          text: options?.text ?? "New label",
+          style: {
+            fontFamily: "Trebuchet MS",
+            fontSize: 18,
+            color: "#1f2a35",
+            align: "left",
+            lineHeight: 1.2,
+            backgroundColor: options?.backgroundColor ?? "rgba(251, 250, 247, 0.92)",
+          },
+          editableMode: {
+            move: true,
+            resize: true,
+            editText: true,
+            editStyle: true,
+            regenerate: false,
+          },
+          tags: options?.tags,
+        },
+      ],
+    },
+    nodeId,
+  };
+}
+
+export function insertPanelNode(
+  scene: SceneGraph,
+  options?: {
+    title?: string;
+    width?: number;
+    height?: number;
+    tags?: string[];
+  },
+): { scene: SceneGraph; nodeId: string } {
+  const width = options?.width ?? 300;
+  const height = options?.height ?? 180;
+  const placement = getAutoPlacement(scene, width, height);
+  const nodeId = createNodeId("panel_manual");
+  const timestamp = new Date().toISOString();
+
+  return {
+    scene: {
+      ...scene,
+      nodes: [
+        ...scene.nodes,
+        {
+          id: nodeId,
+          type: "panel",
+          name: options?.title ?? "Panel",
+          zIndex: getNextZIndex(scene),
+          transform: { x: placement.x, y: placement.y, width, height },
+          bbox: { x: placement.x, y: placement.y, width, height },
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          title: options?.title ?? "Panel",
+          layout: "free",
+          tags: options?.tags,
+        },
+      ],
+    },
+    nodeId,
+  };
+}
+
+export function insertArrowNode(
+  scene: SceneGraph,
+  options?: {
+    label?: string;
+    semantics?: ArrowSemantic;
+    width?: number;
+    height?: number;
+    tags?: string[];
+  },
+): { scene: SceneGraph; nodeId: string } {
+  const width = Math.max(options?.width ?? 220, 80);
+  const height = Math.max(options?.height ?? 36, 16);
+  const placement = getAutoPlacement(scene, width, height);
+  const nodeId = createNodeId("arrow_manual");
+  const timestamp = new Date().toISOString();
+  const semantics = options?.semantics ?? "flows_to";
+  const style = getArrowStyleForSemantics(semantics);
+
+  return {
+    scene: {
+      ...scene,
+      nodes: [
+        ...scene.nodes,
+        {
+          id: nodeId,
+          type: "arrow",
+          name: options?.label ?? "Arrow",
+          zIndex: getNextZIndex(scene),
+          transform: { x: placement.x, y: placement.y, width, height },
+          bbox: { x: placement.x, y: placement.y, width, height },
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          points: [
+            { x: placement.x, y: placement.y + height / 2 },
+            { x: placement.x + width, y: placement.y + height / 2 },
+          ],
+          semantics,
+          relationLabel: options?.label,
+          style,
+          editableMode: {
+            move: true,
+            reshape: true,
+            editStyle: true,
+            regenerate: false,
+          },
+          tags: options?.tags,
+        },
+      ],
+    },
+    nodeId,
+  };
+}
+
+export function insertShapeNode(
+  scene: SceneGraph,
+  options?: {
+    shape?: ShapeKind;
+    name?: string;
+    width?: number;
+    height?: number;
+    fill?: string;
+    stroke?: string;
+    strokeWidth?: number;
+    tags?: string[];
+  },
+): { scene: SceneGraph; nodeId: string } {
+  const shape = options?.shape ?? "rectangle";
+  const width = Math.max(options?.width ?? (shape === "diamond" ? 156 : 180), 48);
+  const height = Math.max(options?.height ?? (shape === "diamond" ? 156 : 120), 48);
+  const placement = getAutoPlacement(scene, width, height);
+  const nodeId = createNodeId("shape_manual");
+  const timestamp = new Date().toISOString();
+  const fallbackName =
+    shape === "ellipse"
+      ? "Ellipse"
+      : shape === "diamond"
+        ? "Diamond"
+        : "Shape";
+
+  return {
+    scene: {
+      ...scene,
+      nodes: [
+        ...scene.nodes,
+        {
+          id: nodeId,
+          type: "shape",
+          shape,
+          name: options?.name ?? fallbackName,
+          zIndex: getNextZIndex(scene),
+          transform: { x: placement.x, y: placement.y, width, height },
+          bbox: { x: placement.x, y: placement.y, width, height },
+          createdAt: timestamp,
+          updatedAt: timestamp,
+          style: {
+            fill: options?.fill ?? "#d9efe9",
+            stroke: options?.stroke ?? "#0c8f8a",
+            strokeWidth: Math.max(options?.strokeWidth ?? 3, 1),
+          },
+          editableMode: {
+            move: true,
+            resize: true,
+            editStyle: true,
+            regenerate: false,
+          },
+          tags: options?.tags,
+        },
+      ],
+    },
+    nodeId,
+  };
+}
+
+export function deleteNode(scene: SceneGraph, nodeId: string): SceneGraph {
+  const removableIds = new Set<string>([nodeId]);
+  let changed = true;
+
+  while (changed) {
+    changed = false;
+    for (const node of scene.nodes) {
+      if (node.parentId && removableIds.has(node.parentId) && !removableIds.has(node.id)) {
+        removableIds.add(node.id);
+        changed = true;
+      }
+    }
+  }
+
+  const nodes = scene.nodes.filter((node) => {
+    if (removableIds.has(node.id)) {
+      return false;
+    }
+    if (node.type === "arrow" && ((node.sourceNodeId && removableIds.has(node.sourceNodeId)) || (node.targetNodeId && removableIds.has(node.targetNodeId)))) {
+      return false;
+    }
+    return true;
+  });
+
+  return {
+    ...scene,
+    nodes: normalizeStackOrder(nodes),
   };
 }
 
